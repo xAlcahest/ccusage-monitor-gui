@@ -1,0 +1,57 @@
+{
+  "name": "ccusage-monitor-gui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/electron/main.js",
+  "scripts": {
+    "dev": "tsc -p tsconfig.server.json && tsc -p tsconfig.electron.json && tsc -p tsconfig.preload.json && concurrently -k -n vite,electron -c cyan,green \"vite\" \"NODE_ENV=development electron .\"",
+    "dev:web": "tsx --watch src/server/index.ts",
+    "build": "vite build && tsc -p tsconfig.server.json && tsc -p tsconfig.electron.json && tsc -p tsconfig.preload.json",
+    "start": "node dist/server/index.js",
+    "dist": "npm run build && electron-builder"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "electron-updater": "^6.3.9",
+    "express": "^4.21.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.3",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.12.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/ws": "^8.5.14",
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.2.1",
+    "electron": "^35.1.2",
+    "electron-builder": "^26.0.12",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0"
+  },
+  "build": {
+    "appId": "com.ccusage.monitor",
+    "productName": "Claude Code Usage Monitor",
+    "icon": "build/icon.png",
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "icon": "build/icon.png"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraMetadata": {
+      "main": "dist/electron/main.js"
+    }
+  }
+}
