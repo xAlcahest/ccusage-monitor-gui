@@ -60,6 +60,11 @@
     ],
     "extraMetadata": {
       "main": "dist/electron/main.js"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "xAlcahest",
+      "repo": "ccusage-monitor-gui"
     }
   }
 }

@@ -12,6 +12,7 @@ import { CostChart } from "./components/CostChart";
 import { TokenBreakdown } from "./components/TokenBreakdown";
 import { ModelDistribution } from "./components/ModelDistribution";
 import { AggregationToggle } from "./components/AggregationToggle";
+import { UpdateBanner } from "./components/UpdateBanner";
 import type { DateRange, ViewMode, AggregationMode } from "./types";
 
 export function App() {
@@ -33,6 +34,7 @@ export function App() {
   return (
     <div className="app-shell">
       <Titlebar />
+      <UpdateBanner />
       <div className="app-main">
         <Header
           connected={connected}

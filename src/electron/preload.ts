@@ -48,4 +48,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ipcRenderer.removeListener("update:downloaded", handler);
     };
   },
+
+  installUpdate: () => ipcRenderer.send("update:install"),
 });

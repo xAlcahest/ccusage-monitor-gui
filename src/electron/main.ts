@@ -150,7 +150,16 @@ async function setupAutoUpdater() {
       mainWindow?.webContents.send("update:downloaded");
     });
 
+    ipcMain.on("update:install", () => {
+      autoUpdater.quitAndInstall(false, true);
+    });
+
     autoUpdater.checkForUpdates().catch(() => {});
+
+    // Check periodically (every 30 minutes)
+    setInterval(() => {
+      autoUpdater.checkForUpdates().catch(() => {});
+    }, 30 * 60 * 1000);
   } catch {
     // electron-updater not installed — skip auto-update
   }

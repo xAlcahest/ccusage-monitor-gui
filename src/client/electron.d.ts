@@ -16,6 +16,7 @@ interface ElectronAPI {
   getVersion: () => Promise<string>;
   onUpdateAvailable: (callback: (version: string) => void) => () => void;
   onUpdateDownloaded: (callback: () => void) => () => void;
+  installUpdate: () => void;
 }
 
 interface Window {
