@@ -1,6 +1,6 @@
 {
   "name": "ccusage-monitor-gui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Real-time desktop dashboard for monitoring Claude Code token usage and costs",
   "author": {
     "name": "xAlcahest",
@@ -53,6 +53,15 @@
       ],
       "category": "Utility",
       "icon": "build/icon.png"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.png"
+    },
+    "directories": {
+      "output": "release"
     },
     "files": [
       "dist/**/*",
