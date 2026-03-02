@@ -40,16 +40,6 @@ export function getDateRangeBounds(range: DateRange): {
   switch (range) {
     case "today":
       return { from: to, to };
-    case "7d": {
-      const d = new Date(now);
-      d.setDate(d.getDate() - 6);
-      return { from: localDateStr(d), to };
-    }
-    case "30d": {
-      const d = new Date(now);
-      d.setDate(d.getDate() - 29);
-      return { from: localDateStr(d), to };
-    }
     case "this-month": {
       const from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
       return { from, to };
@@ -86,6 +76,42 @@ export function computeTotals(rows: DashboardRow[]) {
       costUSD: 0,
     },
   );
+}
+
+export function aggregateByMonth(rows: DashboardRow[]): DashboardRow[] {
+  const byMonth = new Map<
+    string,
+    { inputTokens: number; outputTokens: number; cacheCreationTokens: number; cacheReadTokens: number; totalTokens: number; costUSD: number; models: Set<string> }
+  >();
+
+  for (const row of rows) {
+    const key = row.date.slice(0, 7);
+    let b = byMonth.get(key);
+    if (!b) {
+      b = { inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, costUSD: 0, models: new Set() };
+      byMonth.set(key, b);
+    }
+    b.inputTokens += row.inputTokens;
+    b.outputTokens += row.outputTokens;
+    b.cacheCreationTokens += row.cacheCreationTokens;
+    b.cacheReadTokens += row.cacheReadTokens;
+    b.totalTokens += row.totalTokens;
+    b.costUSD += row.costUSD;
+    for (const m of row.models) b.models.add(m);
+  }
+
+  return [...byMonth.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, b]) => ({
+      date: key,
+      models: [...b.models].sort(),
+      inputTokens: b.inputTokens,
+      outputTokens: b.outputTokens,
+      cacheCreationTokens: b.cacheCreationTokens,
+      cacheReadTokens: b.cacheReadTokens,
+      totalTokens: b.totalTokens,
+      costUSD: b.costUSD,
+    }));
 }
 
 export function shortenProject(projectPath: string): string {

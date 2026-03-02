@@ -42,10 +42,10 @@ export interface WSMessage {
 
 export type DateRange =
   | "today"
-  | "7d"
-  | "30d"
   | "this-month"
   | "all"
   | { from: string; to: string };
 
 export type ViewMode = "daily" | "project";
+
+export type AggregationMode = "days" | "months";

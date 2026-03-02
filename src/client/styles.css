@@ -362,11 +362,30 @@ body {
   margin-bottom: 24px;
 }
 
-.leaderboard h3 {
+.leaderboard-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-secondary);
   margin-bottom: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.leaderboard-header:hover {
+  color: var(--text);
+}
+
+.collapse-arrow {
+  display: inline-block;
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.collapse-arrow.collapsed {
+  transform: rotate(-90deg);
 }
 
 .lb-cards {
@@ -378,8 +397,8 @@ body {
 .lb-card {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
   padding: 8px 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
@@ -388,6 +407,26 @@ body {
   overflow: hidden;
   cursor: default;
   transition: border-color 0.15s;
+}
+
+.lb-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.lb-card-stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.lb-stat {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .lb-card:hover {
@@ -419,13 +458,6 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 200px;
-  position: relative;
-}
-
-.lb-card-tokens {
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-  font-size: 11px;
   position: relative;
 }
 

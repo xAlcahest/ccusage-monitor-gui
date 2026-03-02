@@ -17,6 +17,8 @@ interface CostChartProps {
 export function CostChart({ rows }: CostChartProps) {
   if (rows.length === 0) return null;
 
+  const isMonthly = rows[0].date.length === 7;
+
   const data = rows.map((r) => ({
     date: r.date,
     cost: parseFloat(r.costUSD.toFixed(2)),
@@ -24,7 +26,7 @@ export function CostChart({ rows }: CostChartProps) {
 
   return (
     <div className="chart-card">
-      <h3>Daily Cost</h3>
+      <h3>{isMonthly ? "Monthly Cost" : "Daily Cost"}</h3>
       <ResponsiveContainer width="100%" height={250}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />

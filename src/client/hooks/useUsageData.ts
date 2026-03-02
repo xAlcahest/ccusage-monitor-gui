@@ -6,8 +6,9 @@ import type {
   ModelTotals,
   DateRange,
   ViewMode,
+  AggregationMode,
 } from "../types";
-import { filterRows, computeTotals } from "../utils";
+import { filterRows, computeTotals, aggregateByMonth } from "../utils";
 
 interface UseUsageDataResult {
   rows: DashboardRow[];
@@ -22,6 +23,7 @@ export function useUsageData(
   modelRows: DashboardRow[],
   dateRange: DateRange,
   viewMode: ViewMode,
+  aggregationMode: AggregationMode,
 ): UseUsageDataResult {
   return useMemo(() => {
     const empty = {
@@ -39,6 +41,10 @@ export function useUsageData(
 
     const sourceRows = viewMode === "daily" ? data.rows : projectRows;
     const filtered = filterRows(sourceRows, dateRange);
+    const displayRows =
+      dateRange === "all" && aggregationMode === "months"
+        ? aggregateByMonth(filtered)
+        : filtered;
     const totals = computeTotals(filtered);
     const filteredProjectRows = filterRows(projectRows, dateRange);
 
@@ -55,6 +61,6 @@ export function useUsageData(
       .map(([model, data]) => ({ model, totalTokens: data.totalTokens, cost: data.cost }))
       .sort((a, b) => b.totalTokens - a.totalTokens);
 
-    return { rows: filtered, totals, filteredProjectRows, filteredModelTotals };
-  }, [data, projectRows, modelRows, dateRange, viewMode]);
+    return { rows: displayRows, totals, filteredProjectRows, filteredModelTotals };
+  }, [data, projectRows, modelRows, dateRange, viewMode, aggregationMode]);
 }

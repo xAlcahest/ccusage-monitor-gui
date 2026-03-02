@@ -11,14 +11,16 @@ import { ProjectLeaderboard } from "./components/ProjectLeaderboard";
 import { CostChart } from "./components/CostChart";
 import { TokenBreakdown } from "./components/TokenBreakdown";
 import { ModelDistribution } from "./components/ModelDistribution";
-import type { DateRange, ViewMode } from "./types";
+import { AggregationToggle } from "./components/AggregationToggle";
+import type { DateRange, ViewMode, AggregationMode } from "./types";
 
 export function App() {
   const { data, projectRows, modelRows, connected, send } = useWebSocket();
   const [dateRange, setDateRange] = useState<DateRange>("this-month");
   const [viewMode, setViewMode] = useState<ViewMode>("daily");
   const [updateInterval, setUpdateInterval] = useState(0);
-  const { rows, totals, filteredProjectRows, filteredModelTotals } = useUsageData(data, projectRows, modelRows, dateRange, viewMode);
+  const [aggregationMode, setAggregationMode] = useState<AggregationMode>("months");
+  const { rows, totals, filteredProjectRows, filteredModelTotals } = useUsageData(data, projectRows, modelRows, dateRange, viewMode, aggregationMode);
 
   const handleUpdateModeChange = useCallback(
     (intervalMs: number) => {
@@ -39,6 +41,9 @@ export function App() {
 
         <div className="controls">
           <DateRangeFilter value={dateRange} onChange={setDateRange} />
+          {dateRange === "all" && (
+            <AggregationToggle value={aggregationMode} onChange={setAggregationMode} />
+          )}
           <ViewToggle value={viewMode} onChange={setViewMode} />
           <UpdateModeSelector value={updateInterval} onChange={handleUpdateModeChange} />
         </div>
