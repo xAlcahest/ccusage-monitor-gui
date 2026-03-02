@@ -1,6 +1,6 @@
 {
   "name": "ccusage-monitor-gui",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Real-time desktop dashboard for monitoring Claude Code token usage and costs",
   "author": {
     "name": "xAlcahest",
@@ -53,6 +53,9 @@
       ],
       "category": "Utility",
       "icon": "build/icon.png"
+    },
+    "rpm": {
+      "fpm": ["--rpm-rpmbuild-define", "_build_id_links none"]
     },
     "win": {
       "target": [
