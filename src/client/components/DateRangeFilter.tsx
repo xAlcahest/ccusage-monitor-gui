@@ -5,11 +5,12 @@ interface DateRangeFilterProps {
   onChange: (range: DateRange) => void;
 }
 
-type PresetKey = "today" | "this-month" | "all";
+type PresetKey = "all" | "monthly" | "this-month" | "today";
 const PRESETS: { key: PresetKey; label: string }[] = [
-  { key: "today", label: "Today" },
-  { key: "this-month", label: "This month" },
   { key: "all", label: "All time" },
+  { key: "monthly", label: "Monthly" },
+  { key: "this-month", label: "This month" },
+  { key: "today", label: "Today" },
 ];
 
 export function DateRangeFilter({ value, onChange }: DateRangeFilterProps) {

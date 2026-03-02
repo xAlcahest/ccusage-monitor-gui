@@ -11,10 +11,10 @@ export function AggregationToggle({ value, onChange }: AggregationToggleProps) {
       <span className="filter-label">Show by:</span>
       <div className="filter-buttons">
         <button
-          className={`filter-btn ${value === "months" ? "active" : ""}`}
-          onClick={() => onChange("months")}
+          className={`filter-btn ${value === "years" ? "active" : ""}`}
+          onClick={() => onChange("years")}
         >
-          Months
+          Years
         </button>
         <button
           className={`filter-btn ${value === "days" ? "active" : ""}`}

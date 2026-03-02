@@ -136,22 +136,56 @@ ipcMain.on("app:message", (_event, msg) => {
 });
 
 // Auto-updater (gracefully fails if electron-updater not available)
+// Uses pkexec + dnf for RPM installation so the user gets a polkit password prompt.
 async function setupAutoUpdater() {
   try {
     const { autoUpdater } = await import("electron-updater");
+    const { execFile } = await import("node:child_process");
+    const { promisify } = await import("node:util");
+    const execFileAsync = promisify(execFile);
+
     autoUpdater.autoDownload = true;
-    autoUpdater.autoInstallOnAppQuit = true;
+    autoUpdater.autoInstallOnAppQuit = false; // We handle install manually via pkexec + dnf
+
+    let downloadedFilePath: string | null = null;
 
     autoUpdater.on("update-available", (info: { version: string }) => {
       mainWindow?.webContents.send("update:available", info.version);
     });
 
-    autoUpdater.on("update-downloaded", () => {
+    autoUpdater.on("update-downloaded", (info: { downloadedFile: string }) => {
+      downloadedFilePath = info.downloadedFile;
       mainWindow?.webContents.send("update:downloaded");
     });
 
-    ipcMain.on("update:install", () => {
-      autoUpdater.quitAndInstall(false, true);
+    ipcMain.on("update:install", async () => {
+      if (!downloadedFilePath) return;
+
+      mainWindow?.webContents.send("update:installing");
+
+      try {
+        // Use pkexec for polkit password prompt, sh -c to run dnf.
+        // Path passed as $1 (positional param) to avoid shell injection.
+        // dnf flags:
+        //   -y              non-interactive (pkexec handles auth)
+        //   --best          ensure best available version
+        //   --allowerasing  allow replacing conflicting packages
+        //   --nogpgcheck    RPM from GitHub releases is unsigned
+        //   --setopt=install_weak_deps=False  skip optional weak deps
+        //   --                                end of options
+        await execFileAsync("pkexec", [
+          "sh", "-c",
+          'dnf install -y --best --allowerasing --nogpgcheck --setopt=install_weak_deps=False -- "$1"',
+          "_",
+          downloadedFilePath,
+        ]);
+
+        app.relaunch();
+        app.exit(0);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        mainWindow?.webContents.send("update:error", message);
+      }
     });
 
     autoUpdater.checkForUpdates().catch(() => {});

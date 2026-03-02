@@ -8,6 +8,7 @@ import { ViewToggle } from "./components/ViewToggle";
 import { UpdateModeSelector } from "./components/UpdateModeSelector";
 import { UsageTable } from "./components/UsageTable";
 import { ProjectLeaderboard } from "./components/ProjectLeaderboard";
+import { ProjectSidebar } from "./components/ProjectSidebar";
 import { CostChart } from "./components/CostChart";
 import { TokenBreakdown } from "./components/TokenBreakdown";
 import { ModelDistribution } from "./components/ModelDistribution";
@@ -20,8 +21,8 @@ export function App() {
   const [dateRange, setDateRange] = useState<DateRange>("this-month");
   const [viewMode, setViewMode] = useState<ViewMode>("daily");
   const [updateInterval, setUpdateInterval] = useState(0);
-  const [aggregationMode, setAggregationMode] = useState<AggregationMode>("months");
-  const { rows, totals, filteredProjectRows, filteredModelTotals } = useUsageData(data, projectRows, modelRows, dateRange, viewMode, aggregationMode);
+  const [aggregationMode, setAggregationMode] = useState<AggregationMode>("years");
+  const { rows, totals, filteredProjectRows, filteredModelTotals, filteredModelRows } = useUsageData(data, projectRows, modelRows, dateRange, viewMode, aggregationMode);
 
   const handleUpdateModeChange = useCallback(
     (intervalMs: number) => {
@@ -35,29 +36,32 @@ export function App() {
     <div className="app-shell">
       <Titlebar />
       <UpdateBanner />
-      <div className="app-main">
-        <Header
-          connected={connected}
-          lastUpdated={data?.lastUpdated ?? null}
-        />
+      <div className="app-body">
+        <ProjectSidebar rows={projectRows} />
+        <div className="app-main">
+          <Header
+            connected={connected}
+            lastUpdated={data?.lastUpdated ?? null}
+          />
 
-        <div className="controls">
-          <DateRangeFilter value={dateRange} onChange={setDateRange} />
-          {dateRange === "all" && (
-            <AggregationToggle value={aggregationMode} onChange={setAggregationMode} />
-          )}
-          <ViewToggle value={viewMode} onChange={setViewMode} />
-          <UpdateModeSelector value={updateInterval} onChange={handleUpdateModeChange} />
-        </div>
+          <div className="controls">
+            <DateRangeFilter value={dateRange} onChange={setDateRange} />
+            {dateRange === "all" && (
+              <AggregationToggle value={aggregationMode} onChange={setAggregationMode} />
+            )}
+            <ViewToggle value={viewMode} onChange={setViewMode} />
+            <UpdateModeSelector value={updateInterval} onChange={handleUpdateModeChange} />
+          </div>
 
-        <ProjectLeaderboard rows={filteredProjectRows} />
+          <ProjectLeaderboard rows={filteredProjectRows} />
 
-        <UsageTable rows={rows} totals={totals} viewMode={viewMode} />
+          <UsageTable rows={rows} totals={totals} viewMode={viewMode} modelRows={filteredModelRows} />
 
-        <div className="charts-grid">
-          <CostChart rows={rows} />
-          <TokenBreakdown rows={rows} />
-          <ModelDistribution modelTotals={filteredModelTotals} />
+          <div className="charts-grid">
+            <CostChart rows={rows} />
+            <TokenBreakdown rows={rows} />
+            <ModelDistribution modelRows={filteredModelRows} rows={rows} />
+          </div>
         </div>
       </div>
     </div>

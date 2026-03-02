@@ -1,6 +1,6 @@
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { DashboardRow } from "../types";
-import { formatCurrency } from "../utils";
+import { formatCurrency, formatDateShort } from "../utils";
 
 interface CostChartProps {
   rows: DashboardRow[];
@@ -17,23 +17,27 @@ interface CostChartProps {
 export function CostChart({ rows }: CostChartProps) {
   if (rows.length === 0) return null;
 
-  const isMonthly = rows[0].date.length === 7;
+  const dateLen = rows[0].date.length;
+  const periodLabel = dateLen === 4 ? "Yearly" : dateLen === 7 ? "Monthly" : "Daily";
 
-  const data = rows.map((r) => ({
-    date: r.date,
-    cost: parseFloat(r.costUSD.toFixed(2)),
-  }));
+  const byDate = new Map<string, number>();
+  for (const r of rows) {
+    byDate.set(r.date, (byDate.get(r.date) ?? 0) + r.costUSD);
+  }
+  const data = [...byDate.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, cost]) => ({ date, cost: parseFloat(cost.toFixed(2)) }));
 
   return (
     <div className="chart-card">
-      <h3>{isMonthly ? "Monthly Cost" : "Daily Cost"}</h3>
+      <h3>{periodLabel} Cost</h3>
       <ResponsiveContainer width="100%" height={250}>
-        <BarChart data={data}>
+        <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis
             dataKey="date"
             tick={{ fontSize: 11, fill: "var(--text-secondary)" }}
-            tickFormatter={(v: string) => v.slice(5)}
+            tickFormatter={formatDateShort}
           />
           <YAxis
             tick={{ fontSize: 11, fill: "var(--text-secondary)" }}
@@ -47,8 +51,8 @@ export function CostChart({ rows }: CostChartProps) {
               borderRadius: "6px",
             }}
           />
-          <Bar dataKey="cost" fill="var(--accent)" radius={[3, 3, 0, 0]} />
-        </BarChart>
+          <Line type="monotone" dataKey="cost" stroke="var(--cost-color)" strokeWidth={2} dot={false} isAnimationActive={false} />
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );

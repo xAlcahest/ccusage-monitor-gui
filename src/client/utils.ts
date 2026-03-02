@@ -17,8 +17,19 @@ export function formatCurrency(n: number): string {
 }
 
 export function formatDate(dateStr: string): string {
+  if (dateStr.length === 4) return dateStr; // YYYY
+  if (dateStr.length === 7) {
+    const [year, month] = dateStr.split("-");
+    return `${month}/${year}`;
+  }
   const [year, month, day] = dateStr.split("-");
-  return `${year}-${month}-${day}`;
+  return `${day}/${month}/${year}`;
+}
+
+export function formatDateShort(dateStr: string): string {
+  if (dateStr.length <= 7) return formatDate(dateStr); // YYYY or MM/YYYY
+  const [, month, day] = dateStr.split("-");
+  return `${day}/${month}`;
 }
 
 function localDateStr(d: Date): string {
@@ -44,6 +55,7 @@ export function getDateRangeBounds(range: DateRange): {
       const from = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
       return { from, to };
     }
+    case "monthly":
     case "all":
       return { from: "2000-01-01", to: "2099-12-31" };
   }
@@ -79,17 +91,18 @@ export function computeTotals(rows: DashboardRow[]) {
 }
 
 export function aggregateByMonth(rows: DashboardRow[]): DashboardRow[] {
-  const byMonth = new Map<
+  const byKey = new Map<
     string,
-    { inputTokens: number; outputTokens: number; cacheCreationTokens: number; cacheReadTokens: number; totalTokens: number; costUSD: number; models: Set<string> }
+    { date: string; project?: string; inputTokens: number; outputTokens: number; cacheCreationTokens: number; cacheReadTokens: number; totalTokens: number; costUSD: number; models: Set<string> }
   >();
 
   for (const row of rows) {
-    const key = row.date.slice(0, 7);
-    let b = byMonth.get(key);
+    const month = row.date.slice(0, 7);
+    const key = row.project ? `${month}\0${row.project}` : month;
+    let b = byKey.get(key);
     if (!b) {
-      b = { inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, costUSD: 0, models: new Set() };
-      byMonth.set(key, b);
+      b = { date: month, project: row.project, inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, costUSD: 0, models: new Set() };
+      byKey.set(key, b);
     }
     b.inputTokens += row.inputTokens;
     b.outputTokens += row.outputTokens;
@@ -100,10 +113,49 @@ export function aggregateByMonth(rows: DashboardRow[]): DashboardRow[] {
     for (const m of row.models) b.models.add(m);
   }
 
-  return [...byMonth.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, b]) => ({
-      date: key,
+  return [...byKey.values()]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((b) => ({
+      date: b.date,
+      ...(b.project !== undefined && { project: b.project }),
+      models: [...b.models].sort(),
+      inputTokens: b.inputTokens,
+      outputTokens: b.outputTokens,
+      cacheCreationTokens: b.cacheCreationTokens,
+      cacheReadTokens: b.cacheReadTokens,
+      totalTokens: b.totalTokens,
+      costUSD: b.costUSD,
+    }));
+}
+
+export function aggregateByYear(rows: DashboardRow[]): DashboardRow[] {
+  const byKey = new Map<
+    string,
+    { date: string; project?: string; inputTokens: number; outputTokens: number; cacheCreationTokens: number; cacheReadTokens: number; totalTokens: number; costUSD: number; models: Set<string> }
+  >();
+
+  for (const row of rows) {
+    const year = row.date.slice(0, 4);
+    const key = row.project ? `${year}\0${row.project}` : year;
+    let b = byKey.get(key);
+    if (!b) {
+      b = { date: year, project: row.project, inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, costUSD: 0, models: new Set() };
+      byKey.set(key, b);
+    }
+    b.inputTokens += row.inputTokens;
+    b.outputTokens += row.outputTokens;
+    b.cacheCreationTokens += row.cacheCreationTokens;
+    b.cacheReadTokens += row.cacheReadTokens;
+    b.totalTokens += row.totalTokens;
+    b.costUSD += row.costUSD;
+    for (const m of row.models) b.models.add(m);
+  }
+
+  return [...byKey.values()]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((b) => ({
+      date: b.date,
+      ...(b.project !== undefined && { project: b.project }),
       models: [...b.models].sort(),
       inputTokens: b.inputTokens,
       outputTokens: b.outputTokens,

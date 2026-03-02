@@ -55,7 +55,11 @@ function getInitialCollapsed(): boolean {
 }
 
 export function ProjectLeaderboard({ rows }: ProjectLeaderboardProps) {
-  const projects = useMemo(() => aggregateByProject(rows), [rows]);
+  const allProjects = useMemo(() => aggregateByProject(rows), [rows]);
+  const projects = useMemo(
+    () => allProjects.filter((p) => shortenProject(p.name) !== "~").slice(0, 5),
+    [allProjects],
+  );
   const [collapsed, setCollapsed] = useState(getInitialCollapsed);
 
   if (projects.length === 0) return null;

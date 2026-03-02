@@ -1,103 +1,91 @@
 import {
-  PieChart,
-  Pie,
-  Cell,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import type { ModelTotals } from "../types";
-import { formatNumber } from "../utils";
+import type { DashboardRow } from "../types";
+import { formatNumber, formatDateShort } from "../utils";
 
 interface ModelDistributionProps {
-  modelTotals: ModelTotals[];
+  modelRows: DashboardRow[];
+  rows: DashboardRow[];
 }
 
-const COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff"];
+const COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff", "#818cf8", "#7c3aed"];
 
-function renderLabel({
-  cx,
-  cy,
-  midAngle,
-  innerRadius,
-  outerRadius,
-  percent,
-}: {
-  cx: number;
-  cy: number;
-  midAngle: number;
-  innerRadius: number;
-  outerRadius: number;
-  percent: number;
-}) {
-  if (percent < 0.03) return null;
-  const RADIAN = Math.PI / 180;
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+export function ModelDistribution({ modelRows, rows }: ModelDistributionProps) {
+  if (modelRows.length === 0) return null;
 
-  return (
-    <text
-      x={x}
-      y={y}
-      fill="white"
-      textAnchor="middle"
-      dominantBaseline="central"
-      fontSize={12}
-      fontWeight={600}
-    >
-      {`${(percent * 100).toFixed(0)}%`}
-    </text>
-  );
-}
+  const dateLen = rows.length > 0 ? rows[0].date.length : 10;
+  const periodLabel = dateLen === 4 ? "Yearly" : dateLen === 7 ? "Monthly" : "Daily";
 
-export function ModelDistribution({ modelTotals }: ModelDistributionProps) {
-  if (modelTotals.length === 0) return null;
+  const byDateModel = new Map<string, Map<string, number>>();
+  const allModels = new Set<string>();
 
-  const data = modelTotals.map((m) => ({
-    name: m.model,
-    value: m.totalTokens,
-    cost: m.cost,
-  }));
+  for (const r of modelRows) {
+    const date = r.date.slice(0, dateLen);
+    const model = r.model ?? "unknown";
+    allModels.add(model);
+
+    if (!byDateModel.has(date)) byDateModel.set(date, new Map());
+    const modelMap = byDateModel.get(date)!;
+    modelMap.set(model, (modelMap.get(model) ?? 0) + r.totalTokens);
+  }
+
+  const models = [...allModels].sort();
+  const data = [...byDateModel.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, modelMap]) => {
+      const entry: Record<string, string | number> = { date };
+      for (const m of models) {
+        entry[m] = modelMap.get(m) ?? 0;
+      }
+      return entry;
+    });
 
   return (
     <div className="chart-card">
-      <h3>Model Distribution</h3>
+      <h3>{periodLabel} Model Usage</h3>
       <ResponsiveContainer width="100%" height={250}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            outerRadius={90}
-            innerRadius={40}
-            label={renderLabel}
-            labelLine={false}
-            isAnimationActive={false}
-          >
-            {data.map((_, i) => (
-              <Cell key={i} fill={COLORS[i % COLORS.length]} />
-            ))}
-          </Pie>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+          <XAxis
+            dataKey="date"
+            tick={{ fontSize: 11, fill: "var(--text-secondary)" }}
+            tickFormatter={formatDateShort}
+          />
+          <YAxis
+            tick={{ fontSize: 11, fill: "var(--text-secondary)" }}
+            tickFormatter={(v: number) =>
+              v >= 1_000_000 ? `${(v / 1_000_000).toFixed(1)}M` : `${(v / 1000).toFixed(0)}K`
+            }
+          />
           <Tooltip
-            formatter={(value: number, name: string) => [
-              `${formatNumber(value)} tokens`,
-              name,
-            ]}
+            formatter={(value: number, name: string) => [formatNumber(value), name]}
             contentStyle={{
               background: "var(--bg-secondary)",
               border: "1px solid var(--border)",
               borderRadius: "6px",
-              color: "var(--text)",
             }}
-            itemStyle={{ color: "var(--text)" }}
           />
-          <Legend
-            wrapperStyle={{ color: "var(--text)" }}
-          />
-        </PieChart>
+          <Legend />
+          {models.map((m, i) => (
+            <Line
+              key={m}
+              type="monotone"
+              dataKey={m}
+              stroke={COLORS[i % COLORS.length]}
+              strokeWidth={2}
+              dot={false}
+              isAnimationActive={false}
+            />
+          ))}
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );

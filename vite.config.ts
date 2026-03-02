@@ -9,6 +9,13 @@ export default defineConfig({
   build: {
     outDir: path.resolve(__dirname, "dist/client"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          recharts: ["recharts"],
+        },
+      },
+    },
   },
   server: {
     port: 5173,

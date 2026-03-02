@@ -1,6 +1,6 @@
 import {
-  BarChart,
-  Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { DashboardRow } from "../types";
-import { formatNumber } from "../utils";
+import { formatNumber, formatDateShort } from "../utils";
 
 interface TokenBreakdownProps {
   rows: DashboardRow[];
@@ -18,26 +18,32 @@ interface TokenBreakdownProps {
 export function TokenBreakdown({ rows }: TokenBreakdownProps) {
   if (rows.length === 0) return null;
 
-  const isMonthly = rows[0].date.length === 7;
+  const dateLen = rows[0].date.length;
+  const periodLabel = dateLen === 4 ? "Yearly" : dateLen === 7 ? "Monthly" : "Daily";
 
-  const data = rows.map((r) => ({
-    date: r.date,
-    Input: r.inputTokens,
-    Output: r.outputTokens,
-    "Cache Create": r.cacheCreationTokens,
-    "Cache Read": r.cacheReadTokens,
-  }));
+  const byDate = new Map<string, { Input: number; Output: number; "Cache Create": number; "Cache Read": number }>();
+  for (const r of rows) {
+    const e = byDate.get(r.date) ?? { Input: 0, Output: 0, "Cache Create": 0, "Cache Read": 0 };
+    e.Input += r.inputTokens;
+    e.Output += r.outputTokens;
+    e["Cache Create"] += r.cacheCreationTokens;
+    e["Cache Read"] += r.cacheReadTokens;
+    byDate.set(r.date, e);
+  }
+  const data = [...byDate.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, v]) => ({ date, ...v }));
 
   return (
     <div className="chart-card">
-      <h3>{isMonthly ? "Monthly Token Breakdown" : "Token Breakdown"}</h3>
+      <h3>{periodLabel} Token Breakdown</h3>
       <ResponsiveContainer width="100%" height={250}>
-        <BarChart data={data}>
+        <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis
             dataKey="date"
             tick={{ fontSize: 11, fill: "var(--text-secondary)" }}
-            tickFormatter={(v: string) => v.slice(5)}
+            tickFormatter={formatDateShort}
           />
           <YAxis
             tick={{ fontSize: 11, fill: "var(--text-secondary)" }}
@@ -54,11 +60,11 @@ export function TokenBreakdown({ rows }: TokenBreakdownProps) {
             }}
           />
           <Legend />
-          <Bar dataKey="Input" fill="#6366f1" radius={[3, 3, 0, 0]} />
-          <Bar dataKey="Output" fill="#8b5cf6" radius={[3, 3, 0, 0]} />
-          <Bar dataKey="Cache Create" fill="#a78bfa" radius={[3, 3, 0, 0]} />
-          <Bar dataKey="Cache Read" fill="#c4b5fd" radius={[3, 3, 0, 0]} />
-        </BarChart>
+          <Line type="monotone" dataKey="Input" stroke="#6366f1" strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="Output" stroke="#8b5cf6" strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="Cache Create" stroke="#a78bfa" strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="Cache Read" stroke="#c4b5fd" strokeWidth={2} dot={false} isAnimationActive={false} />
+        </LineChart>
       </ResponsiveContainer>
     </div>
   );

@@ -4,11 +4,9 @@ interface UpdateModeSelectorProps {
 }
 
 const OPTIONS = [
-  { label: "Real-time", value: 0 },
+  { label: "Live", value: 0 },
   { label: "1s", value: 1000 },
   { label: "5s", value: 5000 },
-  { label: "10s", value: 10000 },
-  { label: "30s", value: 30000 },
 ];
 
 export function UpdateModeSelector({ value, onChange }: UpdateModeSelectorProps) {

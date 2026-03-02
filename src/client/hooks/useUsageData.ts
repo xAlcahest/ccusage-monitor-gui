@@ -8,13 +8,14 @@ import type {
   ViewMode,
   AggregationMode,
 } from "../types";
-import { filterRows, computeTotals, aggregateByMonth } from "../utils";
+import { filterRows, computeTotals, aggregateByMonth, aggregateByYear } from "../utils";
 
 interface UseUsageDataResult {
   rows: DashboardRow[];
   totals: DashboardTotals;
   filteredProjectRows: DashboardRow[];
   filteredModelTotals: ModelTotals[];
+  filteredModelRows: DashboardRow[];
 }
 
 export function useUsageData(
@@ -36,15 +37,17 @@ export function useUsageData(
     };
 
     if (!data) {
-      return { rows: [], totals: empty, filteredProjectRows: [], filteredModelTotals: [] };
+      return { rows: [], totals: empty, filteredProjectRows: [], filteredModelTotals: [], filteredModelRows: [] };
     }
 
     const sourceRows = viewMode === "daily" ? data.rows : projectRows;
     const filtered = filterRows(sourceRows, dateRange);
-    const displayRows =
-      dateRange === "all" && aggregationMode === "months"
-        ? aggregateByMonth(filtered)
-        : filtered;
+    let displayRows = filtered;
+    if (dateRange === "monthly") {
+      displayRows = aggregateByMonth(filtered);
+    } else if (dateRange === "all") {
+      if (aggregationMode === "years") displayRows = aggregateByYear(filtered);
+    }
     const totals = computeTotals(filtered);
     const filteredProjectRows = filterRows(projectRows, dateRange);
 
@@ -61,6 +64,6 @@ export function useUsageData(
       .map(([model, data]) => ({ model, totalTokens: data.totalTokens, cost: data.cost }))
       .sort((a, b) => b.totalTokens - a.totalTokens);
 
-    return { rows: displayRows, totals, filteredProjectRows, filteredModelTotals };
+    return { rows: displayRows, totals, filteredProjectRows, filteredModelTotals, filteredModelRows };
   }, [data, projectRows, modelRows, dateRange, viewMode, aggregationMode]);
 }

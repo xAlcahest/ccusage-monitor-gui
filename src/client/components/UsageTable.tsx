@@ -1,11 +1,42 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import type { DashboardRow, DashboardTotals, ViewMode } from "../types";
-import { formatNumber, formatCurrency, shortenProject } from "../utils";
+import { formatNumber, formatCurrency, formatDate, shortenProject } from "../utils";
+
+function useGlowingModels(modelRows: DashboardRow[]): Set<string> {
+  const prevTokens = useRef<Map<string, number>>(new Map());
+  const [glowing, setGlowing] = useState<Set<string>>(new Set());
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  useEffect(() => {
+    const curr = new Map<string, number>();
+    for (const row of modelRows) {
+      const m = row.model ?? "unknown";
+      curr.set(m, (curr.get(m) ?? 0) + row.totalTokens);
+    }
+
+    const active = new Set<string>();
+    for (const [model, tokens] of curr) {
+      const prev = prevTokens.current.get(model) ?? 0;
+      if (prev > 0 && tokens > prev) active.add(model);
+    }
+
+    prevTokens.current = curr;
+
+    if (active.size > 0) {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setGlowing(active);
+      timerRef.current = setTimeout(() => setGlowing(new Set()), 1100);
+    }
+  }, [modelRows]);
+
+  return glowing;
+}
 
 interface UsageTableProps {
   rows: DashboardRow[];
   totals: DashboardTotals;
   viewMode: ViewMode;
+  modelRows: DashboardRow[];
 }
 
 interface DayProjectGroup {
@@ -91,7 +122,15 @@ function monthColor(date: string): string {
   return MONTH_COLORS[monthNum % MONTH_COLORS.length];
 }
 
-export function UsageTable({ rows, totals, viewMode }: UsageTableProps) {
+const TODAY = new Date();
+const TODAY_STR = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, "0")}-${String(TODAY.getDate()).padStart(2, "0")}`;
+
+function isCurrent(date: string): boolean {
+  return TODAY_STR.startsWith(date);
+}
+
+export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProps) {
+  const glowing = useGlowingModels(modelRows);
   const projectGroups = useMemo(
     () => (viewMode === "project" ? groupProjectsByDay(rows) : []),
     [rows, viewMode],
@@ -105,26 +144,39 @@ export function UsageTable({ rows, totals, viewMode }: UsageTableProps) {
     return (
       <div className="table-container">
         <table className="usage-table">
+          <colgroup>
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "11%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "7%" }} />
+          </colgroup>
           <thead>
             <tr>
               <th>Date</th>
               <th>Projects</th>
               <th>Models</th>
-              <th className="num">Input</th>
-              <th className="num">Output</th>
-              <th className="num">Cache Create</th>
-              <th className="num">Cache Read</th>
-              <th className="num">Total Tokens</th>
-              <th className="num">Cost (USD)</th>
+              <th>Input</th>
+              <th>Output</th>
+              <th>Cache Create</th>
+              <th>Cache Read</th>
+              <th>Total</th>
+              <th>Cost</th>
             </tr>
           </thead>
           <tbody>
             {projectGroups.map((group) => (
               <tr key={group.date} style={{ background: monthColor(group.date) }}>
-                <td className="date-cell">{group.date}</td>
+                <td className="date-cell">{formatDate(group.date)}</td>
                 <td className="projects-compact-cell">
                   <div className="projects-list">
-                    {group.projects.map((p) => (
+                    {group.projects
+                      .filter((p) => shortenProject(p.name) !== "~")
+                      .map((p) => (
                       <span
                         key={p.name}
                         className="project-entry"
@@ -139,16 +191,16 @@ export function UsageTable({ rows, totals, viewMode }: UsageTableProps) {
                 <td className="models-cell">
                   <div className="models-list">
                     {group.models.map((m) => (
-                      <span key={m} className="model-tag">{m}</span>
+                      <span key={m} className={`model-tag${isCurrent(group.date) && glowing.has(m) ? " glow" : ""}`}>{m}</span>
                     ))}
                   </div>
                 </td>
-                <td className="num">{formatNumber(group.inputTokens)}</td>
-                <td className="num">{formatNumber(group.outputTokens)}</td>
-                <td className="num">{formatNumber(group.cacheCreationTokens)}</td>
-                <td className="num">{formatNumber(group.cacheReadTokens)}</td>
-                <td className="num">{formatNumber(group.totalTokens)}</td>
-                <td className="num cost">{formatCurrency(group.costUSD)}</td>
+                <td>{formatNumber(group.inputTokens)}</td>
+                <td>{formatNumber(group.outputTokens)}</td>
+                <td>{formatNumber(group.cacheCreationTokens)}</td>
+                <td>{formatNumber(group.cacheReadTokens)}</td>
+                <td>{formatNumber(group.totalTokens)}</td>
+                <td className="cost">{formatCurrency(group.costUSD)}</td>
               </tr>
             ))}
           </tbody>
@@ -157,12 +209,12 @@ export function UsageTable({ rows, totals, viewMode }: UsageTableProps) {
               <td><strong>Total</strong></td>
               <td />
               <td />
-              <td className="num"><strong>{formatNumber(totals.inputTokens)}</strong></td>
-              <td className="num"><strong>{formatNumber(totals.outputTokens)}</strong></td>
-              <td className="num"><strong>{formatNumber(totals.cacheCreationTokens)}</strong></td>
-              <td className="num"><strong>{formatNumber(totals.cacheReadTokens)}</strong></td>
-              <td className="num"><strong>{formatNumber(totals.totalTokens)}</strong></td>
-              <td className="num cost"><strong>{formatCurrency(totals.costUSD)}</strong></td>
+              <td><strong>{formatNumber(totals.inputTokens)}</strong></td>
+              <td><strong>{formatNumber(totals.outputTokens)}</strong></td>
+              <td><strong>{formatNumber(totals.cacheCreationTokens)}</strong></td>
+              <td><strong>{formatNumber(totals.cacheReadTokens)}</strong></td>
+              <td><strong>{formatNumber(totals.totalTokens)}</strong></td>
+              <td className="cost"><strong>{formatCurrency(totals.costUSD)}</strong></td>
             </tr>
           </tfoot>
         </table>
@@ -173,35 +225,45 @@ export function UsageTable({ rows, totals, viewMode }: UsageTableProps) {
   return (
     <div className="table-container">
       <table className="usage-table">
+        <colgroup>
+          <col style={{ width: "9%" }} />
+          <col style={{ width: "18%" }} />
+          <col style={{ width: "10%" }} />
+          <col style={{ width: "10%" }} />
+          <col style={{ width: "13%" }} />
+          <col style={{ width: "14%" }} />
+          <col style={{ width: "14%" }} />
+          <col style={{ width: "8%" }} />
+        </colgroup>
         <thead>
           <tr>
             <th>Date</th>
             <th>Models</th>
-            <th className="num">Input</th>
-            <th className="num">Output</th>
-            <th className="num">Cache Create</th>
-            <th className="num">Cache Read</th>
-            <th className="num">Total Tokens</th>
-            <th className="num">Cost (USD)</th>
+            <th>Input</th>
+            <th>Output</th>
+            <th>Cache Create</th>
+            <th>Cache Read</th>
+            <th>Total</th>
+            <th>Cost</th>
           </tr>
         </thead>
         <tbody>
           {rows.map((row, i) => (
             <tr key={`${row.date}-${i}`} style={{ background: monthColor(row.date) }}>
-              <td className="date-cell">{row.date}</td>
+              <td className="date-cell">{formatDate(row.date)}</td>
               <td className="models-cell">
                 <div className="models-list">
                   {row.models.map((m) => (
-                    <span key={m} className="model-tag">{m}</span>
+                    <span key={m} className={`model-tag${isCurrent(row.date) && glowing.has(m) ? " glow" : ""}`}>{m}</span>
                   ))}
                 </div>
               </td>
-              <td className="num">{formatNumber(row.inputTokens)}</td>
-              <td className="num">{formatNumber(row.outputTokens)}</td>
-              <td className="num">{formatNumber(row.cacheCreationTokens)}</td>
-              <td className="num">{formatNumber(row.cacheReadTokens)}</td>
-              <td className="num">{formatNumber(row.totalTokens)}</td>
-              <td className="num cost">{formatCurrency(row.costUSD)}</td>
+              <td>{formatNumber(row.inputTokens)}</td>
+              <td>{formatNumber(row.outputTokens)}</td>
+              <td>{formatNumber(row.cacheCreationTokens)}</td>
+              <td>{formatNumber(row.cacheReadTokens)}</td>
+              <td>{formatNumber(row.totalTokens)}</td>
+              <td className="cost">{formatCurrency(row.costUSD)}</td>
             </tr>
           ))}
         </tbody>
@@ -209,12 +271,12 @@ export function UsageTable({ rows, totals, viewMode }: UsageTableProps) {
           <tr className="totals-row">
             <td><strong>Total</strong></td>
             <td />
-            <td className="num"><strong>{formatNumber(totals.inputTokens)}</strong></td>
-            <td className="num"><strong>{formatNumber(totals.outputTokens)}</strong></td>
-            <td className="num"><strong>{formatNumber(totals.cacheCreationTokens)}</strong></td>
-            <td className="num"><strong>{formatNumber(totals.cacheReadTokens)}</strong></td>
-            <td className="num"><strong>{formatNumber(totals.totalTokens)}</strong></td>
-            <td className="num cost"><strong>{formatCurrency(totals.costUSD)}</strong></td>
+            <td><strong>{formatNumber(totals.inputTokens)}</strong></td>
+            <td><strong>{formatNumber(totals.outputTokens)}</strong></td>
+            <td><strong>{formatNumber(totals.cacheCreationTokens)}</strong></td>
+            <td><strong>{formatNumber(totals.cacheReadTokens)}</strong></td>
+            <td><strong>{formatNumber(totals.totalTokens)}</strong></td>
+            <td className="cost"><strong>{formatCurrency(totals.costUSD)}</strong></td>
           </tr>
         </tfoot>
       </table>

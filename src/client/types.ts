@@ -43,9 +43,10 @@ export interface WSMessage {
 export type DateRange =
   | "today"
   | "this-month"
+  | "monthly"
   | "all"
   | { from: string; to: string };
 
 export type ViewMode = "daily" | "project";
 
-export type AggregationMode = "days" | "months";
+export type AggregationMode = "days" | "years";

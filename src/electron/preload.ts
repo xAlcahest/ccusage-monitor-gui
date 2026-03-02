@@ -49,5 +49,22 @@ contextBridge.exposeInMainWorld("electronAPI", {
     };
   },
 
+  onUpdateInstalling: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on("update:installing", handler);
+    return () => {
+      ipcRenderer.removeListener("update:installing", handler);
+    };
+  },
+
+  onUpdateError: (callback: (message: string) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, message: string) =>
+      callback(message);
+    ipcRenderer.on("update:error", handler);
+    return () => {
+      ipcRenderer.removeListener("update:error", handler);
+    };
+  },
+
   installUpdate: () => ipcRenderer.send("update:install"),
 });
