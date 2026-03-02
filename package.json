@@ -1,6 +1,11 @@
 {
   "name": "ccusage-monitor-gui",
   "version": "1.0.0",
+  "description": "Real-time desktop dashboard for monitoring Claude Code token usage and costs",
+  "author": {
+    "name": "xAlcahest",
+    "email": "alcahest@users.noreply.github.com"
+  },
   "private": true,
   "type": "module",
   "main": "dist/electron/main.js",
@@ -41,7 +46,10 @@
     "linux": {
       "target": [
         "AppImage",
-        "deb"
+        "deb",
+        "rpm",
+        "tar.gz",
+        "flatpak"
       ],
       "category": "Utility",
       "icon": "build/icon.png"
