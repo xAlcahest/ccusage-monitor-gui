@@ -13,6 +13,7 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
   const [section, setSection] = useState<Section>("appearance");
   const [closing, setClosing] = useState(false);
   const [version, setVersion] = useState("");
+  const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "up-to-date" | "error">("idle");
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const close = useCallback(() => {
@@ -30,6 +31,28 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
 
   useEffect(() => {
     window.electronAPI?.getVersion().then(setVersion);
+  }, []);
+
+  useEffect(() => {
+    if (!window.electronAPI) return;
+    const cleanupChecking = window.electronAPI.onUpdateChecking(() => {
+      setUpdateStatus("checking");
+    });
+    const cleanupNotAvailable = window.electronAPI.onUpdateNotAvailable(() => {
+      setUpdateStatus("up-to-date");
+    });
+    const cleanupAvailable = window.electronAPI.onUpdateAvailable(() => {
+      setUpdateStatus("idle");
+    });
+    const cleanupError = window.electronAPI.onUpdateError(() => {
+      setUpdateStatus("error");
+    });
+    return () => {
+      cleanupChecking();
+      cleanupNotAvailable();
+      cleanupAvailable();
+      cleanupError();
+    };
   }, []);
 
   const setTheme = (theme: ThemeMode) => onChange({ ...settings, theme });
@@ -79,16 +102,25 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
             {window.electronAPI && (
               <>
                 <div className="settings-group">
-                  <button className="settings-action-btn" onClick={() => window.electronAPI!.checkForUpdate()}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <button
+                    className="settings-action-btn"
+                    disabled={updateStatus === "checking"}
+                    onClick={() => {
+                      setUpdateStatus("checking");
+                      window.electronAPI!.checkForUpdate();
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={updateStatus === "checking" ? "spin" : ""}>
                       <path d="M21.5 2v6h-6" />
                       <path d="M2.5 22v-6h6" />
                       <path d="M2.5 11.5a10 10 0 0 1 18.8-4.3" />
                       <path d="M21.5 12.5a10 10 0 0 1-18.8 4.3" />
                     </svg>
-                    Check for updates
+                    {updateStatus === "checking" ? "Checking..." : "Check for updates"}
                   </button>
                   {version && <p className="settings-version">Current version: v{version}</p>}
+                  {updateStatus === "up-to-date" && <p className="settings-version settings-success">You're up to date!</p>}
+                  {updateStatus === "error" && <p className="settings-version settings-error">Failed to check for updates.</p>}
                 </div>
 
                 <hr className="settings-separator" />

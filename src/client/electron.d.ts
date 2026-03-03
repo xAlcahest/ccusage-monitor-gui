@@ -17,7 +17,9 @@ interface ElectronAPI {
   isMaximized: () => Promise<boolean>;
   onMaximizeChange: (callback: (maximized: boolean) => void) => () => void;
   getVersion: () => Promise<string>;
+  onUpdateChecking: (callback: () => void) => () => void;
   onUpdateAvailable: (callback: (version: string) => void) => () => void;
+  onUpdateNotAvailable: (callback: () => void) => () => void;
   onUpdateDownloaded: (callback: () => void) => () => void;
   onUpdateInstalling: (callback: () => void) => () => void;
   onUpdateError: (callback: (message: string) => void) => () => void;

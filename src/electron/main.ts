@@ -154,6 +154,9 @@ ipcMain.on("app:message", (_event, msg) => {
 
 // Auto-updater (gracefully fails if electron-updater not available)
 // Uses pkexec + dnf for RPM installation so the user gets a polkit password prompt.
+
+let checkForUpdates: (() => void) | null = null;
+
 async function setupAutoUpdater() {
   try {
     const { autoUpdater } = await import("electron-updater");
@@ -166,12 +169,29 @@ async function setupAutoUpdater() {
 
     let downloadedFilePath: string | null = null;
 
+    autoUpdater.on("checking-for-update", () => {
+      console.log("[updater] Checking for updates...");
+      mainWindow?.webContents.send("update:checking");
+    });
+
     autoUpdater.on("update-available", (info: { version: string }) => {
+      console.log(`[updater] Update available: ${info.version}`);
       mainWindow?.webContents.send("update:available", info.version);
+    });
+
+    autoUpdater.on("update-not-available", () => {
+      console.log("[updater] Already up to date");
+      mainWindow?.webContents.send("update:not-available");
+    });
+
+    autoUpdater.on("error", (err: Error) => {
+      console.error("[updater] Error:", err.message);
+      mainWindow?.webContents.send("update:error", err.message);
     });
 
     autoUpdater.on("update-downloaded", (info: { downloadedFile: string }) => {
       downloadedFilePath = info.downloadedFile;
+      console.log(`[updater] Downloaded: ${downloadedFilePath}`);
       mainWindow?.webContents.send("update:downloaded");
     });
 
@@ -205,20 +225,32 @@ async function setupAutoUpdater() {
       }
     });
 
-    ipcMain.on("update:check", () => {
-      autoUpdater.checkForUpdates().catch(() => {});
-    });
+    checkForUpdates = () => {
+      autoUpdater.checkForUpdates().catch((err: Error) => {
+        console.error("[updater] checkForUpdates failed:", err.message);
+        mainWindow?.webContents.send("update:error", err.message);
+      });
+    };
 
-    autoUpdater.checkForUpdates().catch(() => {});
+    checkForUpdates();
 
-    // Check periodically (every 30 minutes)
     setInterval(() => {
-      autoUpdater.checkForUpdates().catch(() => {});
+      checkForUpdates?.();
     }, 30 * 60 * 1000);
-  } catch {
-    // electron-updater not installed — skip auto-update
+  } catch (err) {
+    console.log("[updater] electron-updater not available, skipping auto-update");
   }
 }
+
+// Always register IPC handler so it works even if setupAutoUpdater hasn't completed yet
+ipcMain.on("update:check", () => {
+  if (checkForUpdates) {
+    checkForUpdates();
+  } else {
+    console.log("[updater] Auto-updater not initialized");
+    mainWindow?.webContents.send("update:error", "Auto-updater not available");
+  }
+});
 
 // Single instance lock
 const gotLock = app.requestSingleInstanceLock();
