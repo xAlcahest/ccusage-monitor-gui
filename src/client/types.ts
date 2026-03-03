@@ -54,6 +54,8 @@ export type ViewMode = "daily" | "project";
 
 export type AggregationMode = "days" | "years";
 
+export type TodayMode = "hourly" | "day";
+
 export type ThemeMode = "auto" | "dark" | "light";
 export type UpdateChannel = "release" | "prerelease" | "all";
 

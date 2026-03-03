@@ -13,9 +13,10 @@ import { CostChart } from "./components/CostChart";
 import { TokenBreakdown } from "./components/TokenBreakdown";
 import { ModelDistribution } from "./components/ModelDistribution";
 import { AggregationToggle } from "./components/AggregationToggle";
+import { TodayModeToggle } from "./components/TodayModeToggle";
 import { UpdateBanner } from "./components/UpdateBanner";
 import { Settings } from "./components/Settings";
-import type { DateRange, ViewMode, AggregationMode, AppSettings } from "./types";
+import type { DateRange, ViewMode, AggregationMode, TodayMode, AppSettings } from "./types";
 
 const SETTINGS_KEY = "app-settings";
 const DEFAULT_SETTINGS: AppSettings = {
@@ -47,9 +48,10 @@ export function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("daily");
   const [updateInterval, setUpdateInterval] = useState(0);
   const [aggregationMode, setAggregationMode] = useState<AggregationMode>("years");
+  const [todayMode, setTodayMode] = useState<TodayMode>("day");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
-  const { rows, chartRows, totals, filteredProjectRows, filteredModelTotals, filteredModelRows } = useUsageData(data, projectRows, modelRows, hourlyRows, hourlyProjectRows, hourlyModelRows, dateRange, viewMode, aggregationMode);
+  const { rows, chartRows, totals, filteredProjectRows, filteredModelTotals, filteredModelRows } = useUsageData(data, projectRows, modelRows, hourlyRows, hourlyProjectRows, hourlyModelRows, dateRange, viewMode, aggregationMode, todayMode);
 
   useEffect(() => {
     applyTheme(settings.theme);
@@ -85,6 +87,9 @@ export function App() {
             <DateRangeFilter value={dateRange} onChange={setDateRange} />
             {dateRange === "all" && (
               <AggregationToggle value={aggregationMode} onChange={setAggregationMode} />
+            )}
+            {dateRange === "today" && (
+              <TodayModeToggle value={todayMode} onChange={setTodayMode} />
             )}
             <ViewToggle value={viewMode} onChange={setViewMode} />
             <UpdateModeSelector value={updateInterval} onChange={handleUpdateModeChange} />

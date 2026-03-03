@@ -7,6 +7,7 @@ import type {
   DateRange,
   ViewMode,
   AggregationMode,
+  TodayMode,
 } from "../types";
 import { filterRows, computeTotals, aggregateByMonth, aggregateByYear } from "../utils";
 
@@ -29,6 +30,7 @@ export function useUsageData(
   dateRange: DateRange,
   viewMode: ViewMode,
   aggregationMode: AggregationMode,
+  todayMode: TodayMode,
 ): UseUsageDataResult {
   return useMemo(() => {
     const empty = {
@@ -65,29 +67,33 @@ export function useUsageData(
         .map(([model, d]) => ({ model, totalTokens: d.totalTokens, cost: d.cost }))
         .sort((a, b) => b.totalTokens - a.totalTokens);
 
-      const chartDisplayRows = viewMode === "daily"
+      const hourlyDisplayRows = viewMode === "daily"
         ? fillHourlyGaps(todayHourly, todayStr)
         : todayHourly;
 
-      // Table shows a single daily summary row
-      const allModels = new Set<string>();
-      for (const row of todayHourly) {
-        for (const m of row.models) allModels.add(m);
+      let tableRows: DashboardRow[];
+      if (todayMode === "day") {
+        const allModels = new Set<string>();
+        for (const row of todayHourly) {
+          for (const m of row.models) allModels.add(m);
+        }
+        tableRows = [{
+          date: todayStr,
+          models: [...allModels],
+          inputTokens: totals.inputTokens,
+          outputTokens: totals.outputTokens,
+          cacheCreationTokens: totals.cacheCreationTokens,
+          cacheReadTokens: totals.cacheReadTokens,
+          totalTokens: totals.totalTokens,
+          costUSD: totals.costUSD,
+        }];
+      } else {
+        tableRows = hourlyDisplayRows;
       }
-      const tableRows: DashboardRow[] = [{
-        date: todayStr,
-        models: [...allModels],
-        inputTokens: totals.inputTokens,
-        outputTokens: totals.outputTokens,
-        cacheCreationTokens: totals.cacheCreationTokens,
-        cacheReadTokens: totals.cacheReadTokens,
-        totalTokens: totals.totalTokens,
-        costUSD: totals.costUSD,
-      }];
 
       return {
         rows: tableRows,
-        chartRows: chartDisplayRows,
+        chartRows: hourlyDisplayRows,
         totals,
         filteredProjectRows,
         filteredModelTotals,
@@ -120,7 +126,7 @@ export function useUsageData(
       .sort((a, b) => b.totalTokens - a.totalTokens);
 
     return { rows: displayRows, chartRows: displayRows, totals, filteredProjectRows, filteredModelTotals, filteredModelRows };
-  }, [data, projectRows, modelRows, hourlyRows, hourlyProjectRows, hourlyModelRows, dateRange, viewMode, aggregationMode]);
+  }, [data, projectRows, modelRows, hourlyRows, hourlyProjectRows, hourlyModelRows, dateRange, viewMode, aggregationMode, todayMode]);
 }
 
 function fillHourlyGaps(rows: DashboardRow[], todayStr: string): DashboardRow[] {
