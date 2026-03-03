@@ -17,6 +17,8 @@ export function formatCurrency(n: number): string {
 }
 
 export function formatDate(dateStr: string): string {
+  // Hourly: "YYYY-MM-DD HH:00" → "HH:00"
+  if (dateStr.includes(" ")) return dateStr.split(" ")[1];
   if (dateStr.length === 4) return dateStr; // YYYY
   if (dateStr.length === 7) {
     const [year, month] = dateStr.split("-");
@@ -27,6 +29,8 @@ export function formatDate(dateStr: string): string {
 }
 
 export function formatDateShort(dateStr: string): string {
+  // Hourly: "YYYY-MM-DD HH:00" → "HH:00"
+  if (dateStr.includes(" ")) return dateStr.split(" ")[1];
   if (dateStr.length <= 7) return formatDate(dateStr); // YYYY or MM/YYYY
   const [, month, day] = dateStr.split("-");
   return `${day}/${month}`;

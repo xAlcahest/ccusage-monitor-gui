@@ -38,6 +38,9 @@ export interface WSMessage {
   data: DashboardData;
   projectRows: DashboardRow[];
   modelRows: DashboardRow[];
+  hourlyRows: DashboardRow[];
+  hourlyProjectRows: DashboardRow[];
+  hourlyModelRows: DashboardRow[];
 }
 
 export type DateRange =
@@ -50,3 +53,13 @@ export type DateRange =
 export type ViewMode = "daily" | "project";
 
 export type AggregationMode = "days" | "years";
+
+export type ThemeMode = "auto" | "dark" | "light";
+export type UpdateChannel = "release" | "prerelease" | "all";
+
+export interface AppSettings {
+  theme: ThemeMode;
+  autoUpdate: boolean;
+  updateChannel: UpdateChannel;
+  projectsPath: string;
+}

@@ -4,6 +4,9 @@ interface ElectronAPI {
       data: import("./types").DashboardData;
       projectRows: import("./types").DashboardRow[];
       modelRows: import("./types").DashboardRow[];
+      hourlyRows: import("./types").DashboardRow[];
+      hourlyProjectRows: import("./types").DashboardRow[];
+      hourlyModelRows: import("./types").DashboardRow[];
     }) => void,
   ) => () => void;
   send: (message: unknown) => void;
@@ -19,6 +22,7 @@ interface ElectronAPI {
   onUpdateInstalling: (callback: () => void) => () => void;
   onUpdateError: (callback: (message: string) => void) => () => void;
   installUpdate: () => void;
+  checkForUpdate: () => void;
 }
 
 interface Window {

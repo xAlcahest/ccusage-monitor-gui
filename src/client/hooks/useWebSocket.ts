@@ -5,6 +5,9 @@ interface UseWebSocketResult {
   data: DashboardData | null;
   projectRows: DashboardRow[];
   modelRows: DashboardRow[];
+  hourlyRows: DashboardRow[];
+  hourlyProjectRows: DashboardRow[];
+  hourlyModelRows: DashboardRow[];
   connected: boolean;
   send: (msg: unknown) => void;
 }
@@ -13,6 +16,9 @@ export function useWebSocket(): UseWebSocketResult {
   const [data, setData] = useState<DashboardData | null>(null);
   const [projectRows, setProjectRows] = useState<DashboardRow[]>([]);
   const [modelRows, setModelRows] = useState<DashboardRow[]>([]);
+  const [hourlyRows, setHourlyRows] = useState<DashboardRow[]>([]);
+  const [hourlyProjectRows, setHourlyProjectRows] = useState<DashboardRow[]>([]);
+  const [hourlyModelRows, setHourlyModelRows] = useState<DashboardRow[]>([]);
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -28,6 +34,9 @@ export function useWebSocket(): UseWebSocketResult {
         setData(payload.data);
         setProjectRows(payload.projectRows);
         setModelRows(payload.modelRows);
+        setHourlyRows(payload.hourlyRows ?? []);
+        setHourlyProjectRows(payload.hourlyProjectRows ?? []);
+        setHourlyModelRows(payload.hourlyModelRows ?? []);
       });
       window.electronAPI.ready();
       return cleanup;
@@ -55,6 +64,9 @@ export function useWebSocket(): UseWebSocketResult {
         setData(msg.data);
         setProjectRows(msg.projectRows);
         setModelRows(msg.modelRows);
+        setHourlyRows(msg.hourlyRows ?? []);
+        setHourlyProjectRows(msg.hourlyProjectRows ?? []);
+        setHourlyModelRows(msg.hourlyModelRows ?? []);
       };
 
       ws.onclose = () => {
@@ -82,5 +94,5 @@ export function useWebSocket(): UseWebSocketResult {
 
   const send = useCallback((msg: unknown) => sendRef.current(msg), []);
 
-  return { data, projectRows, modelRows, connected, send };
+  return { data, projectRows, modelRows, hourlyRows, hourlyProjectRows, hourlyModelRows, connected, send };
 }
