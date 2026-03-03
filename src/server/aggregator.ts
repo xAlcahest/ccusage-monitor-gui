@@ -17,16 +17,41 @@ function toLocalDate(isoTimestamp: string): string {
   return `${y}-${m}-${day}`;
 }
 
+function toLocalHour(isoTimestamp: string): string {
+  const d = new Date(isoTimestamp);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const h = String(d.getHours()).padStart(2, "0");
+  return `${y}-${m}-${day} ${h}:00`;
+}
+
 export class UsageAggregator {
   private dailyData = new Map<string, DailyUsage>();
   private dailyProjectData = new Map<string, DailyProjectUsage>();
   private dailyModelData = new Map<string, DailyModelUsage>();
+  private hourlyData = new Map<string, DailyUsage>();
+  private hourlyProjectData = new Map<string, DailyProjectUsage>();
+  private hourlyModelData = new Map<string, DailyModelUsage>();
   private modelTokens = new Map<string, { totalTokens: number; cost: number }>();
+
+  clear(): void {
+    this.dailyData.clear();
+    this.dailyProjectData.clear();
+    this.dailyModelData.clear();
+    this.hourlyData.clear();
+    this.hourlyProjectData.clear();
+    this.hourlyModelData.clear();
+    this.modelTokens.clear();
+  }
 
   addEntry(entry: UsageEntry): void {
     this.updateDaily(entry, 1);
     this.updateDailyProject(entry, 1);
     this.updateDailyModel(entry, 1);
+    this.updateHourly(entry, 1);
+    this.updateHourlyProject(entry, 1);
+    this.updateHourlyModel(entry, 1);
     this.updateModelTotals(entry, 1);
   }
 
@@ -34,6 +59,9 @@ export class UsageAggregator {
     this.updateDaily(entry, -1);
     this.updateDailyProject(entry, -1);
     this.updateDailyModel(entry, -1);
+    this.updateHourly(entry, -1);
+    this.updateHourlyProject(entry, -1);
+    this.updateHourlyModel(entry, -1);
     this.updateModelTotals(entry, -1);
   }
 
@@ -152,6 +180,143 @@ export class UsageAggregator {
     }
 
     return rows.sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  getHourlyRows(): DashboardRow[] {
+    const rows: DashboardRow[] = [];
+    for (const [, hourly] of this.hourlyData) {
+      const totalTokens =
+        hourly.inputTokens + hourly.outputTokens +
+        hourly.cacheCreationTokens + hourly.cacheReadTokens;
+      rows.push({
+        date: hourly.date,
+        models: [...hourly.models].map(formatModelName).sort(),
+        inputTokens: hourly.inputTokens,
+        outputTokens: hourly.outputTokens,
+        cacheCreationTokens: hourly.cacheCreationTokens,
+        cacheReadTokens: hourly.cacheReadTokens,
+        totalTokens,
+        costUSD: hourly.totalCost,
+      });
+    }
+    return rows.sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  getHourlyProjectRows(): DashboardRow[] {
+    const rows: DashboardRow[] = [];
+    for (const [, hp] of this.hourlyProjectData) {
+      const totalTokens =
+        hp.inputTokens + hp.outputTokens +
+        hp.cacheCreationTokens + hp.cacheReadTokens;
+      rows.push({
+        date: hp.date,
+        project: hp.project,
+        models: [...hp.models].map(formatModelName).sort(),
+        inputTokens: hp.inputTokens,
+        outputTokens: hp.outputTokens,
+        cacheCreationTokens: hp.cacheCreationTokens,
+        cacheReadTokens: hp.cacheReadTokens,
+        totalTokens,
+        costUSD: hp.totalCost,
+      });
+    }
+    return rows.sort(
+      (a, b) =>
+        a.date.localeCompare(b.date) ||
+        (a.project ?? "").localeCompare(b.project ?? ""),
+    );
+  }
+
+  getHourlyModelRows(): DashboardRow[] {
+    const rows: DashboardRow[] = [];
+    for (const [, hm] of this.hourlyModelData) {
+      const totalTokens =
+        hm.inputTokens + hm.outputTokens +
+        hm.cacheCreationTokens + hm.cacheReadTokens;
+      rows.push({
+        date: hm.date,
+        model: formatModelName(hm.model),
+        models: [formatModelName(hm.model)],
+        inputTokens: hm.inputTokens,
+        outputTokens: hm.outputTokens,
+        cacheCreationTokens: hm.cacheCreationTokens,
+        cacheReadTokens: hm.cacheReadTokens,
+        totalTokens,
+        costUSD: hm.totalCost,
+      });
+    }
+    return rows.sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  private updateHourly(entry: UsageEntry, sign: 1 | -1): void {
+    const hour = toLocalHour(entry.timestamp);
+    let h = this.hourlyData.get(hour);
+    if (!h) {
+      h = {
+        date: hour,
+        models: new Set(),
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheCreationTokens: 0,
+        cacheReadTokens: 0,
+        totalCost: 0,
+      };
+      this.hourlyData.set(hour, h);
+    }
+    h.models.add(entry.model);
+    h.inputTokens += entry.inputTokens * sign;
+    h.outputTokens += entry.outputTokens * sign;
+    h.cacheCreationTokens += entry.cacheCreationTokens * sign;
+    h.cacheReadTokens += entry.cacheReadTokens * sign;
+    h.totalCost += entry.cost * sign;
+  }
+
+  private updateHourlyProject(entry: UsageEntry, sign: 1 | -1): void {
+    const hour = toLocalHour(entry.timestamp);
+    const key = `${hour}:${entry.project}`;
+    let hp = this.hourlyProjectData.get(key);
+    if (!hp) {
+      hp = {
+        date: hour,
+        project: entry.project,
+        models: new Set(),
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheCreationTokens: 0,
+        cacheReadTokens: 0,
+        totalCost: 0,
+      };
+      this.hourlyProjectData.set(key, hp);
+    }
+    hp.models.add(entry.model);
+    hp.inputTokens += entry.inputTokens * sign;
+    hp.outputTokens += entry.outputTokens * sign;
+    hp.cacheCreationTokens += entry.cacheCreationTokens * sign;
+    hp.cacheReadTokens += entry.cacheReadTokens * sign;
+    hp.totalCost += entry.cost * sign;
+  }
+
+  private updateHourlyModel(entry: UsageEntry, sign: 1 | -1): void {
+    const hour = toLocalHour(entry.timestamp);
+    const key = `${hour}:${entry.model}`;
+    let hm = this.hourlyModelData.get(key);
+    if (!hm) {
+      hm = {
+        date: hour,
+        model: entry.model,
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheCreationTokens: 0,
+        cacheReadTokens: 0,
+        totalCost: 0,
+      };
+      this.hourlyModelData.set(key, hm);
+    }
+    hm.inputTokens += entry.inputTokens * sign;
+    hm.outputTokens += entry.outputTokens * sign;
+    hm.cacheCreationTokens += entry.cacheCreationTokens * sign;
+    hm.cacheReadTokens += entry.cacheReadTokens * sign;
+    hm.totalCost += entry.cost * sign;
   }
 
   private updateDailyModel(entry: UsageEntry, sign: 1 | -1): void {

@@ -42,6 +42,9 @@ export function createServer({ aggregator, port, onUpdateModeChange }: ServerOpt
         data: aggregator.getDashboardData(),
         projectRows: aggregator.getProjectRows(),
         modelRows: aggregator.getModelRows(),
+        hourlyRows: aggregator.getHourlyRows(),
+        hourlyProjectRows: aggregator.getHourlyProjectRows(),
+        hourlyModelRows: aggregator.getHourlyModelRows(),
       }),
     );
 
@@ -61,6 +64,9 @@ export function createServer({ aggregator, port, onUpdateModeChange }: ServerOpt
       data: aggregator.getDashboardData(),
       projectRows: aggregator.getProjectRows(),
       modelRows: aggregator.getModelRows(),
+      hourlyRows: aggregator.getHourlyRows(),
+      hourlyProjectRows: aggregator.getHourlyProjectRows(),
+      hourlyModelRows: aggregator.getHourlyModelRows(),
     });
     for (const client of wss.clients) {
       if (client.readyState === WebSocket.OPEN) {

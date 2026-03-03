@@ -90,4 +90,7 @@ export interface DashboardData {
 export interface WSMessage {
   type: "snapshot" | "update";
   data: DashboardData;
+  hourlyRows?: DashboardRow[];
+  hourlyProjectRows?: DashboardRow[];
+  hourlyModelRows?: DashboardRow[];
 }
