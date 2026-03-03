@@ -21,8 +21,9 @@ const COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff", "#818cf8"
 export function ModelDistribution({ modelRows, rows }: ModelDistributionProps) {
   if (modelRows.length === 0) return null;
 
+  const isHourly = rows.length > 0 && rows[0].date.includes(" ");
   const dateLen = rows.length > 0 ? rows[0].date.length : 10;
-  const periodLabel = dateLen === 4 ? "Yearly" : dateLen === 7 ? "Monthly" : "Daily";
+  const periodLabel = isHourly ? "Hourly" : dateLen === 4 ? "Yearly" : dateLen === 7 ? "Monthly" : "Daily";
 
   const byDateModel = new Map<string, Map<string, number>>();
   const allModels = new Set<string>();

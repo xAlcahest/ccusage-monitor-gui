@@ -122,15 +122,24 @@ function monthColor(date: string): string {
   return MONTH_COLORS[monthNum % MONTH_COLORS.length];
 }
 
-const TODAY = new Date();
-const TODAY_STR = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, "0")}-${String(TODAY.getDate()).padStart(2, "0")}`;
-
 function isCurrent(date: string): boolean {
-  return TODAY_STR.startsWith(date);
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const todayStr = `${y}-${m}-${d}`;
+  // Hourly: "YYYY-MM-DD HH:00"
+  if (date.includes(" ")) {
+    const h = String(now.getHours()).padStart(2, "0");
+    return date === `${todayStr} ${h}:00`;
+  }
+  return todayStr.startsWith(date);
 }
 
 export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProps) {
   const glowing = useGlowingModels(modelRows);
+  const isHourly = rows.length > 0 && rows[0].date.includes(" ");
+  const dateHeader = isHourly ? "Hour" : "Date";
   const projectGroups = useMemo(
     () => (viewMode === "project" ? groupProjectsByDay(rows) : []),
     [rows, viewMode],
@@ -157,7 +166,7 @@ export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProp
           </colgroup>
           <thead>
             <tr>
-              <th>Date</th>
+              <th>{dateHeader}</th>
               <th>Projects</th>
               <th>Models</th>
               <th>Input</th>
@@ -237,7 +246,7 @@ export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProp
         </colgroup>
         <thead>
           <tr>
-            <th>Date</th>
+            <th>{dateHeader}</th>
             <th>Models</th>
             <th>Input</th>
             <th>Output</th>

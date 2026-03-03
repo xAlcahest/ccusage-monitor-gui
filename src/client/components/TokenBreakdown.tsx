@@ -18,8 +18,9 @@ interface TokenBreakdownProps {
 export function TokenBreakdown({ rows }: TokenBreakdownProps) {
   if (rows.length === 0) return null;
 
+  const isHourly = rows[0].date.includes(" ");
   const dateLen = rows[0].date.length;
-  const periodLabel = dateLen === 4 ? "Yearly" : dateLen === 7 ? "Monthly" : "Daily";
+  const periodLabel = isHourly ? "Hourly" : dateLen === 4 ? "Yearly" : dateLen === 7 ? "Monthly" : "Daily";
 
   const byDate = new Map<string, { Input: number; Output: number; "Cache Create": number; "Cache Read": number }>();
   for (const r of rows) {

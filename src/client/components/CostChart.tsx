@@ -17,8 +17,9 @@ interface CostChartProps {
 export function CostChart({ rows }: CostChartProps) {
   if (rows.length === 0) return null;
 
+  const isHourly = rows[0].date.includes(" ");
   const dateLen = rows[0].date.length;
-  const periodLabel = dateLen === 4 ? "Yearly" : dateLen === 7 ? "Monthly" : "Daily";
+  const periodLabel = isHourly ? "Hourly" : dateLen === 4 ? "Yearly" : dateLen === 7 ? "Monthly" : "Daily";
 
   const byDate = new Map<string, number>();
   for (const r of rows) {
