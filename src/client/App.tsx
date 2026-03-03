@@ -49,7 +49,7 @@ export function App() {
   const [aggregationMode, setAggregationMode] = useState<AggregationMode>("years");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(loadSettings);
-  const { rows, totals, filteredProjectRows, filteredModelTotals, filteredModelRows } = useUsageData(data, projectRows, modelRows, hourlyRows, hourlyProjectRows, hourlyModelRows, dateRange, viewMode, aggregationMode);
+  const { rows, chartRows, totals, filteredProjectRows, filteredModelTotals, filteredModelRows } = useUsageData(data, projectRows, modelRows, hourlyRows, hourlyProjectRows, hourlyModelRows, dateRange, viewMode, aggregationMode);
 
   useEffect(() => {
     applyTheme(settings.theme);
@@ -95,9 +95,9 @@ export function App() {
           <UsageTable rows={rows} totals={totals} viewMode={viewMode} modelRows={filteredModelRows} />
 
           <div className="charts-grid">
-            <CostChart rows={rows} />
-            <TokenBreakdown rows={rows} />
-            <ModelDistribution modelRows={filteredModelRows} rows={rows} />
+            <CostChart rows={chartRows} />
+            <TokenBreakdown rows={chartRows} />
+            <ModelDistribution modelRows={filteredModelRows} rows={chartRows} />
           </div>
         </div>
       </div>

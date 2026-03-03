@@ -12,6 +12,7 @@ import { filterRows, computeTotals, aggregateByMonth, aggregateByYear } from "..
 
 interface UseUsageDataResult {
   rows: DashboardRow[];
+  chartRows: DashboardRow[];
   totals: DashboardTotals;
   filteredProjectRows: DashboardRow[];
   filteredModelTotals: ModelTotals[];
@@ -40,7 +41,7 @@ export function useUsageData(
     };
 
     if (!data) {
-      return { rows: [], totals: empty, filteredProjectRows: [], filteredModelTotals: [], filteredModelRows: [] };
+      return { rows: [], chartRows: [], totals: empty, filteredProjectRows: [], filteredModelTotals: [], filteredModelRows: [] };
     }
 
     // Today always uses hourly data
@@ -64,12 +65,29 @@ export function useUsageData(
         .map(([model, d]) => ({ model, totalTokens: d.totalTokens, cost: d.cost }))
         .sort((a, b) => b.totalTokens - a.totalTokens);
 
-      const displayRows = viewMode === "daily"
+      const chartDisplayRows = viewMode === "daily"
         ? fillHourlyGaps(todayHourly, todayStr)
         : todayHourly;
 
+      // Table shows a single daily summary row
+      const allModels = new Set<string>();
+      for (const row of todayHourly) {
+        for (const m of row.models) allModels.add(m);
+      }
+      const tableRows: DashboardRow[] = [{
+        date: todayStr,
+        models: [...allModels],
+        inputTokens: totals.inputTokens,
+        outputTokens: totals.outputTokens,
+        cacheCreationTokens: totals.cacheCreationTokens,
+        cacheReadTokens: totals.cacheReadTokens,
+        totalTokens: totals.totalTokens,
+        costUSD: totals.costUSD,
+      }];
+
       return {
-        rows: displayRows,
+        rows: tableRows,
+        chartRows: chartDisplayRows,
         totals,
         filteredProjectRows,
         filteredModelTotals,
@@ -101,7 +119,7 @@ export function useUsageData(
       .map(([model, d]) => ({ model, totalTokens: d.totalTokens, cost: d.cost }))
       .sort((a, b) => b.totalTokens - a.totalTokens);
 
-    return { rows: displayRows, totals, filteredProjectRows, filteredModelTotals, filteredModelRows };
+    return { rows: displayRows, chartRows: displayRows, totals, filteredProjectRows, filteredModelTotals, filteredModelRows };
   }, [data, projectRows, modelRows, hourlyRows, hourlyProjectRows, hourlyModelRows, dateRange, viewMode, aggregationMode]);
 }
 
