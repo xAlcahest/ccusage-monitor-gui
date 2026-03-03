@@ -1,10 +1,11 @@
 import { app, BrowserWindow, ipcMain, Menu } from "electron";
+import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
 import { UsageAggregator } from "../server/aggregator.js";
-import { parseFileIncremental } from "../server/parser.js";
-import { startWatcher } from "../server/watcher.js";
+import { parseFileIncremental, resetParser } from "../server/parser.js";
+import { startWatcher, type Watcher } from "../server/watcher.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isDev = process.env.NODE_ENV === "development";
@@ -17,6 +18,7 @@ app.disableHardwareAcceleration();
 
 let mainWindow: BrowserWindow | null = null;
 const aggregator = new UsageAggregator();
+let currentWatcher: Watcher | null = null;
 let debounceMs = 0;
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 const fileLocks = new Map<string, Promise<void>>();
@@ -27,6 +29,9 @@ function broadcastUpdate() {
     data: aggregator.getDashboardData(),
     projectRows: aggregator.getProjectRows(),
     modelRows: aggregator.getModelRows(),
+    hourlyRows: aggregator.getHourlyRows(),
+    hourlyProjectRows: aggregator.getHourlyProjectRows(),
+    hourlyModelRows: aggregator.getHourlyModelRows(),
   });
 }
 
@@ -133,6 +138,18 @@ ipcMain.on("app:message", (_event, msg) => {
   if (msg?.type === "setUpdateMode" && typeof msg.intervalMs === "number") {
     debounceMs = msg.intervalMs;
   }
+  if (msg?.type === "setProjectsPath" && typeof msg.path === "string") {
+    const resolved = msg.path.replace(/^~/, os.homedir());
+    if (!fs.existsSync(resolved)) return;
+    // startWatcher expects the parent dir (it appends "projects/" internally)
+    const parentDir = resolved.replace(/\/projects\/?$/, "");
+    currentWatcher?.close();
+    aggregator.clear();
+    resetParser();
+    fileLocks.clear();
+    currentWatcher = startWatcher(parentDir, (filePath) => processFile(filePath));
+    broadcastUpdate();
+  }
 });
 
 // Auto-updater (gracefully fails if electron-updater not available)
@@ -188,6 +205,10 @@ async function setupAutoUpdater() {
       }
     });
 
+    ipcMain.on("update:check", () => {
+      autoUpdater.checkForUpdates().catch(() => {});
+    });
+
     autoUpdater.checkForUpdates().catch(() => {});
 
     // Check periodically (every 30 minutes)
@@ -217,7 +238,7 @@ if (!gotLock) {
 
     // Start backend data pipeline
     const claudePath = path.join(os.homedir(), ".claude");
-    startWatcher(claudePath, (filePath) => {
+    currentWatcher = startWatcher(claudePath, (filePath) => {
       processFile(filePath);
     });
 

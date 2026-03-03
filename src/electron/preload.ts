@@ -67,4 +67,5 @@ contextBridge.exposeInMainWorld("electronAPI", {
   },
 
   installUpdate: () => ipcRenderer.send("update:install"),
+  checkForUpdate: () => ipcRenderer.send("update:check"),
 });
