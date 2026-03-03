@@ -1,12 +1,12 @@
-name: Build and Release
+name: Test Build
 
 on:
+  workflow_dispatch:
   push:
-    tags:
+    branches:
+      - "**"
+    tags-ignore:
       - "v*"
-
-permissions:
-  contents: write
 
 jobs:
   linux-deb:
@@ -22,8 +22,9 @@ jobs:
       - run: npx electron-builder --linux deb --publish never
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-deb
+          name: test-linux-deb
           path: release/*.deb
+          retention-days: 7
 
   linux-rpm:
     runs-on: ubuntu-latest
@@ -39,8 +40,9 @@ jobs:
       - run: npx electron-builder --linux rpm --publish never
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-rpm
+          name: test-linux-rpm
           path: release/*.rpm
+          retention-days: 7
 
   linux-appimage:
     runs-on: ubuntu-latest
@@ -55,8 +57,9 @@ jobs:
       - run: npx electron-builder --linux AppImage --publish never
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-appimage
+          name: test-linux-appimage
           path: release/*.AppImage
+          retention-days: 7
 
   linux-tar:
     runs-on: ubuntu-latest
@@ -71,8 +74,9 @@ jobs:
       - run: npx electron-builder --linux tar.gz --publish never
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-tar
+          name: test-linux-tar
           path: release/*.tar.gz
+          retention-days: 7
 
   windows:
     runs-on: windows-latest
@@ -87,37 +91,6 @@ jobs:
       - run: npx electron-builder --win --publish never
       - uses: actions/upload-artifact@v4
         with:
-          name: windows
-          path: |
-            release/*.exe
-
-  release:
-    needs: [linux-deb, linux-rpm, linux-appimage, linux-tar, windows]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-          merge-multiple: true
-
-      - name: List artifacts
-        run: find artifacts -type f | sort
-
-      - name: Detect prerelease
-        id: meta
-        run: |
-          TAG="${GITHUB_REF#refs/tags/}"
-          if [[ "$TAG" == *-* ]]; then
-            echo "prerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "prerelease=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: false
-          prerelease: ${{ steps.meta.outputs.prerelease == 'true' }}
-          generate_release_notes: true
-          files: |
-            artifacts/*
+          name: test-windows
+          path: release/*.exe
+          retention-days: 7
