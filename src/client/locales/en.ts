@@ -137,4 +137,13 @@ export default {
   "update.failedWithError": "Update failed: {{error}}",
   "update.retry": "Retry",
 
+
+  "settings.about": "About",
+  "settings.aboutTitle": "About",
+  "settings.aboutDesc": "Application info and credits.",
+  "settings.credits": "Credits",
+  "settings.madeBy": "Made by {{author}}",
+  "settings.builtWith": "Built with Electron, React, and TypeScript",
+  "settings.license": "License: {{license}}",
+  "settings.sourceCode": "Source code",
 } as const;

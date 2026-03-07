@@ -121,4 +121,13 @@ export default {
   "update.failedWithError": "更新失敗: {{error}}",
   "update.retry": "重試",
 
+
+  "settings.about": "關於",
+  "settings.aboutTitle": "關於",
+  "settings.aboutDesc": "應用程式資訊和致謝。",
+  "settings.credits": "致謝",
+  "settings.madeBy": "由 {{author}} 製作",
+  "settings.builtWith": "使用 Electron、React 和 TypeScript 建構",
+  "settings.license": "授權條款: {{license}}",
+  "settings.sourceCode": "原始碼",
 } as const;

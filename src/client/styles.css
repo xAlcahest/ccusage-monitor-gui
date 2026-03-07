@@ -1010,6 +1010,14 @@ body {
   font-weight: 500;
 }
 
+.settings-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.settings-link:hover {
+  text-decoration: underline;
+}
 
 .settings-btn {
   padding: 8px 16px;

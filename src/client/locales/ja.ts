@@ -121,4 +121,13 @@ export default {
   "update.failedWithError": "アップデート失敗: {{error}}",
   "update.retry": "再試行",
 
+
+  "settings.about": "このアプリについて",
+  "settings.aboutTitle": "このアプリについて",
+  "settings.aboutDesc": "アプリケーション情報とクレジット。",
+  "settings.credits": "クレジット",
+  "settings.madeBy": "{{author}} が作成",
+  "settings.builtWith": "Electron、React、TypeScriptで構築",
+  "settings.license": "ライセンス: {{license}}",
+  "settings.sourceCode": "ソースコード",
 } as const;

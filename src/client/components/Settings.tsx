@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { LANGUAGES } from "../i18n";
 import type { AppSettings, ThemeMode, UpdateChannel } from "../types";
 
-type Section = "appearance" | "updates" | "advanced";
+type Section = "appearance" | "updates" | "advanced" | "about";
 
 interface SettingsProps {
   settings: AppSettings;
@@ -80,6 +80,7 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
         <NavItem icon={<PaletteIcon />} label={t("settings.appearance")} active={section === "appearance"} onClick={() => setSection("appearance")} />
         <NavItem icon={<UpdateIcon />} label={t("settings.updates")} active={section === "updates"} onClick={() => setSection("updates")} />
         <NavItem icon={<GearIcon />} label={t("settings.advanced")} active={section === "advanced"} onClick={() => setSection("advanced")} />
+        <NavItem icon={<InfoIcon />} label={t("settings.about")} active={section === "about"} onClick={() => setSection("about")} />
       </nav>
 
       <div className="settings-content">
@@ -220,6 +221,24 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
           </div>
         )}
 
+        {section === "about" && (
+          <div className="settings-section">
+            <h2>{t("settings.aboutTitle")}</h2>
+            <p className="settings-desc">{t("settings.aboutDesc")}</p>
+            <div className="settings-group">
+              <h4>{t("settings.credits")}</h4>
+              <p className="settings-version">{t("settings.madeBy", { author: "xAlcahest" })}</p>
+              <p className="settings-version">{t("settings.builtWith")}</p>
+              <p className="settings-version">{t("settings.license", { license: "MIT" })}</p>
+              {version && <p className="settings-version">{t("settings.currentVersion", { version })}</p>}
+              <p className="settings-version">
+                <a href="https://github.com/xAlcahest/ccusage-monitor-gui" target="_blank" rel="noopener noreferrer" className="settings-link">
+                  {t("settings.sourceCode")}
+                </a>
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -266,3 +285,12 @@ function GearIcon() {
   );
 }
 
+function InfoIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+  );
+}
