@@ -17,6 +17,7 @@
     "dist": "npm run build && electron-builder"
   },
   "dependencies": {
+    "@number-flow/react": "^0.6.0",
     "chokidar": "^4.0.3",
     "electron-updater": "^6.3.9",
     "express": "^4.21.2",
@@ -55,7 +56,10 @@
       "icon": "build/icon.png"
     },
     "rpm": {
-      "fpm": ["--rpm-rpmbuild-define", "_build_id_links none"]
+      "fpm": [
+        "--rpm-rpmbuild-define",
+        "_build_id_links none"
+      ]
     },
     "win": {
       "target": [

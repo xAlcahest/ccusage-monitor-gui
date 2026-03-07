@@ -36,7 +36,7 @@ export function formatDateShort(dateStr: string): string {
   return `${day}/${month}`;
 }
 
-function localDateStr(d: Date): string {
+export function localDateStr(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
@@ -94,18 +94,18 @@ export function computeTotals(rows: DashboardRow[]) {
   );
 }
 
-export function aggregateByMonth(rows: DashboardRow[]): DashboardRow[] {
+function aggregateByDateSlice(rows: DashboardRow[], sliceLen: number): DashboardRow[] {
   const byKey = new Map<
     string,
     { date: string; project?: string; inputTokens: number; outputTokens: number; cacheCreationTokens: number; cacheReadTokens: number; totalTokens: number; costUSD: number; models: Set<string> }
   >();
 
   for (const row of rows) {
-    const month = row.date.slice(0, 7);
-    const key = row.project ? `${month}\0${row.project}` : month;
+    const period = row.date.slice(0, sliceLen);
+    const key = row.project ? `${period}\0${row.project}` : period;
     let b = byKey.get(key);
     if (!b) {
-      b = { date: month, project: row.project, inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, costUSD: 0, models: new Set() };
+      b = { date: period, project: row.project, inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, costUSD: 0, models: new Set() };
       byKey.set(key, b);
     }
     b.inputTokens += row.inputTokens;
@@ -132,42 +132,12 @@ export function aggregateByMonth(rows: DashboardRow[]): DashboardRow[] {
     }));
 }
 
+export function aggregateByMonth(rows: DashboardRow[]): DashboardRow[] {
+  return aggregateByDateSlice(rows, 7);
+}
+
 export function aggregateByYear(rows: DashboardRow[]): DashboardRow[] {
-  const byKey = new Map<
-    string,
-    { date: string; project?: string; inputTokens: number; outputTokens: number; cacheCreationTokens: number; cacheReadTokens: number; totalTokens: number; costUSD: number; models: Set<string> }
-  >();
-
-  for (const row of rows) {
-    const year = row.date.slice(0, 4);
-    const key = row.project ? `${year}\0${row.project}` : year;
-    let b = byKey.get(key);
-    if (!b) {
-      b = { date: year, project: row.project, inputTokens: 0, outputTokens: 0, cacheCreationTokens: 0, cacheReadTokens: 0, totalTokens: 0, costUSD: 0, models: new Set() };
-      byKey.set(key, b);
-    }
-    b.inputTokens += row.inputTokens;
-    b.outputTokens += row.outputTokens;
-    b.cacheCreationTokens += row.cacheCreationTokens;
-    b.cacheReadTokens += row.cacheReadTokens;
-    b.totalTokens += row.totalTokens;
-    b.costUSD += row.costUSD;
-    for (const m of row.models) b.models.add(m);
-  }
-
-  return [...byKey.values()]
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .map((b) => ({
-      date: b.date,
-      ...(b.project !== undefined && { project: b.project }),
-      models: [...b.models].sort(),
-      inputTokens: b.inputTokens,
-      outputTokens: b.outputTokens,
-      cacheCreationTokens: b.cacheCreationTokens,
-      cacheReadTokens: b.cacheReadTokens,
-      totalTokens: b.totalTokens,
-      costUSD: b.costUSD,
-    }));
+  return aggregateByDateSlice(rows, 4);
 }
 
 export function shortenProject(projectPath: string): string {

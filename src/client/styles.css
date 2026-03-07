@@ -928,6 +928,8 @@ body {
   gap: 6px;
 }
 
+
+
 .settings-btn {
   padding: 8px 16px;
   border-radius: 6px;
@@ -1074,4 +1076,63 @@ body {
   border: none;
   border-top: 1px solid var(--border);
   margin: 24px 0;
+}
+
+.expand-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin: -4px 2px -4px -4px;
+  vertical-align: middle;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  opacity: 0.5;
+  padding: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.expand-btn:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.expand-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.expand-btn.expanded svg {
+  transform: rotate(90deg);
+}
+
+.expand-btn.expanded {
+  opacity: 0.8;
+}
+
+.breakdown-row td {
+  font-size: clamp(10px, 0.75vw, 12px);
+  color: var(--text-secondary);
+  padding-top: 1px;
+  padding-bottom: 1px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 40%, transparent);
+}
+
+.breakdown-indent {
+  padding-left: clamp(18px, 1.5vw, 30px) !important;
+  font-weight: 400 !important;
+  white-space: nowrap;
+}
+
+/* NumberFlow animated digits */
+number-flow-react {
+  font-variant-numeric: tabular-nums;
+  --number-flow-char-height: 1em;
+}
+
+[data-animate-numbers="false"] number-flow-react {
+  --number-flow-duration: 0s;
 }

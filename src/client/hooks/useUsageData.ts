@@ -9,7 +9,21 @@ import type {
   AggregationMode,
   TodayMode,
 } from "../types";
-import { filterRows, computeTotals, aggregateByMonth, aggregateByYear } from "../utils";
+import { filterRows, computeTotals, aggregateByMonth, aggregateByYear, localDateStr } from "../utils";
+
+function buildModelTotals(modelRows: DashboardRow[]): ModelTotals[] {
+  const map = new Map<string, { totalTokens: number; cost: number }>();
+  for (const row of modelRows) {
+    const model = row.model ?? "unknown";
+    const existing = map.get(model) ?? { totalTokens: 0, cost: 0 };
+    existing.totalTokens += row.totalTokens;
+    existing.cost += row.costUSD;
+    map.set(model, existing);
+  }
+  return [...map.entries()]
+    .map(([model, d]) => ({ model, totalTokens: d.totalTokens, cost: d.cost }))
+    .sort((a, b) => b.totalTokens - a.totalTokens);
+}
 
 interface UseUsageDataResult {
   rows: DashboardRow[];
@@ -33,39 +47,20 @@ export function useUsageData(
   todayMode: TodayMode,
 ): UseUsageDataResult {
   return useMemo(() => {
-    const empty = {
-      inputTokens: 0,
-      outputTokens: 0,
-      cacheCreationTokens: 0,
-      cacheReadTokens: 0,
-      totalTokens: 0,
-      costUSD: 0,
-    };
-
     if (!data) {
-      return { rows: [], chartRows: [], totals: empty, filteredProjectRows: [], filteredModelTotals: [], filteredModelRows: [] };
+      return { rows: [], chartRows: [], totals: computeTotals([]), filteredProjectRows: [], filteredModelTotals: [], filteredModelRows: [] };
     }
 
     // Today always uses hourly data
     if (dateRange === "today") {
-      const todayStr = getTodayStr();
+      const todayStr = localDateStr(new Date());
       const sourceHourly = viewMode === "daily" ? hourlyRows : hourlyProjectRows;
       const todayHourly = sourceHourly.filter((r) => r.date.startsWith(todayStr));
       const todayHourlyModel = hourlyModelRows.filter((r) => r.date.startsWith(todayStr));
       const totals = computeTotals(todayHourly);
       const filteredProjectRows = hourlyProjectRows.filter((r) => r.date.startsWith(todayStr));
 
-      const modelMap = new Map<string, { totalTokens: number; cost: number }>();
-      for (const row of todayHourlyModel) {
-        const model = row.model ?? "unknown";
-        const existing = modelMap.get(model) ?? { totalTokens: 0, cost: 0 };
-        existing.totalTokens += row.totalTokens;
-        existing.cost += row.costUSD;
-        modelMap.set(model, existing);
-      }
-      const filteredModelTotals: ModelTotals[] = [...modelMap.entries()]
-        .map(([model, d]) => ({ model, totalTokens: d.totalTokens, cost: d.cost }))
-        .sort((a, b) => b.totalTokens - a.totalTokens);
+      const filteredModelTotals = buildModelTotals(todayHourlyModel);
 
       const hourlyDisplayRows = viewMode === "daily"
         ? fillHourlyGaps(todayHourly, todayStr)
@@ -113,17 +108,7 @@ export function useUsageData(
     const filteredProjectRows = filterRows(projectRows, dateRange);
 
     const filteredModelRows = filterRows(modelRows, dateRange);
-    const modelMap = new Map<string, { totalTokens: number; cost: number }>();
-    for (const row of filteredModelRows) {
-      const model = row.model ?? "unknown";
-      const existing = modelMap.get(model) ?? { totalTokens: 0, cost: 0 };
-      existing.totalTokens += row.totalTokens;
-      existing.cost += row.costUSD;
-      modelMap.set(model, existing);
-    }
-    const filteredModelTotals: ModelTotals[] = [...modelMap.entries()]
-      .map(([model, d]) => ({ model, totalTokens: d.totalTokens, cost: d.cost }))
-      .sort((a, b) => b.totalTokens - a.totalTokens);
+    const filteredModelTotals = buildModelTotals(filteredModelRows);
 
     return { rows: displayRows, chartRows: displayRows, totals, filteredProjectRows, filteredModelTotals, filteredModelRows };
   }, [data, projectRows, modelRows, hourlyRows, hourlyProjectRows, hourlyModelRows, dateRange, viewMode, aggregationMode, todayMode]);
@@ -151,10 +136,3 @@ function fillHourlyGaps(rows: DashboardRow[], todayStr: string): DashboardRow[] 
   return filled;
 }
 
-function getTodayStr(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}

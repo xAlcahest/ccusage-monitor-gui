@@ -1,6 +1,10 @@
-import { useMemo, useRef, useState, useEffect } from "react";
+import React, { useMemo, useRef, useState, useEffect } from "react";
 import type { DashboardRow, DashboardTotals, ViewMode } from "../types";
-import { formatNumber, formatCurrency, formatDate, shortenProject } from "../utils";
+import { formatCurrency, formatDate, shortenProject } from "../utils";
+import { AnimatedNumber, AnimatedCurrency } from "./AnimatedValue";
+
+const N = (n: number) => <AnimatedNumber value={n} />;
+const C = (n: number) => <AnimatedCurrency value={n} />;
 
 function useGlowingModels(modelRows: DashboardRow[]): Set<string> {
   const prevTokens = useRef<Map<string, number>>(new Map());
@@ -136,17 +140,66 @@ function isCurrent(date: string): boolean {
   return todayStr.startsWith(date);
 }
 
+function groupModelsByDate(modelRows: DashboardRow[], dateLen: number): Map<string, DashboardRow[]> {
+  const byDateModel = new Map<string, DashboardRow>();
+  for (const row of modelRows) {
+    const date = row.date.slice(0, dateLen);
+    const model = row.model ?? "";
+    const key = `${date}\0${model}`;
+    const existing = byDateModel.get(key);
+    if (existing) {
+      existing.inputTokens += row.inputTokens;
+      existing.outputTokens += row.outputTokens;
+      existing.cacheCreationTokens += row.cacheCreationTokens;
+      existing.cacheReadTokens += row.cacheReadTokens;
+      existing.totalTokens += row.totalTokens;
+      existing.costUSD += row.costUSD;
+    } else {
+      byDateModel.set(key, { ...row, date });
+    }
+  }
+
+  const byDate = new Map<string, DashboardRow[]>();
+  for (const row of byDateModel.values()) {
+    let list = byDate.get(row.date);
+    if (!list) {
+      list = [];
+      byDate.set(row.date, list);
+    }
+    list.push(row);
+  }
+  for (const list of byDate.values()) {
+    list.sort((a, b) => b.costUSD - a.costUSD);
+  }
+  return byDate;
+}
+
 export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProps) {
   const glowing = useGlowingModels(modelRows);
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
   const isHourly = rows.length > 0 && rows[0].date.includes(" ");
   const dateHeader = isHourly ? "Hour" : "Date";
   const projectGroups = useMemo(
     () => (viewMode === "project" ? groupProjectsByDay(rows) : []),
     [rows, viewMode],
   );
+  const dateLen = rows.length > 0 ? rows[0].date.length : 10;
+  const modelByDate = useMemo(
+    () => groupModelsByDate(modelRows, dateLen),
+    [modelRows, dateLen],
+  );
+
+  const toggleDate = (date: string) => {
+    setExpandedDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
+      return next;
+    });
+  };
 
   if (rows.length === 0) {
-    return <div className="empty-state">No usage data for this range.</div>;
+    return <div className="empty-state">{"No usage data for this range."}</div>;
   }
 
   if (viewMode === "project") {
@@ -167,14 +220,14 @@ export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProp
           <thead>
             <tr>
               <th>{dateHeader}</th>
-              <th>Projects</th>
-              <th>Models</th>
-              <th>Input</th>
-              <th>Output</th>
-              <th>Cache Create</th>
-              <th>Cache Read</th>
-              <th>Total</th>
-              <th>Cost</th>
+              <th>{"Projects"}</th>
+              <th>{"Models"}</th>
+              <th>{"Input"}</th>
+              <th>{"Output"}</th>
+              <th>{"Cache Create"}</th>
+              <th>{"Cache Read"}</th>
+              <th>{"Total"}</th>
+              <th>{"Cost"}</th>
             </tr>
           </thead>
           <tbody>
@@ -204,26 +257,26 @@ export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProp
                     ))}
                   </div>
                 </td>
-                <td>{formatNumber(group.inputTokens)}</td>
-                <td>{formatNumber(group.outputTokens)}</td>
-                <td>{formatNumber(group.cacheCreationTokens)}</td>
-                <td>{formatNumber(group.cacheReadTokens)}</td>
-                <td>{formatNumber(group.totalTokens)}</td>
-                <td className="cost">{formatCurrency(group.costUSD)}</td>
+                <td>{N(group.inputTokens)}</td>
+                <td>{N(group.outputTokens)}</td>
+                <td>{N(group.cacheCreationTokens)}</td>
+                <td>{N(group.cacheReadTokens)}</td>
+                <td>{N(group.totalTokens)}</td>
+                <td className="cost">{C(group.costUSD)}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="totals-row">
-              <td><strong>Total</strong></td>
+              <td><strong>{"Total"}</strong></td>
               <td />
               <td />
-              <td><strong>{formatNumber(totals.inputTokens)}</strong></td>
-              <td><strong>{formatNumber(totals.outputTokens)}</strong></td>
-              <td><strong>{formatNumber(totals.cacheCreationTokens)}</strong></td>
-              <td><strong>{formatNumber(totals.cacheReadTokens)}</strong></td>
-              <td><strong>{formatNumber(totals.totalTokens)}</strong></td>
-              <td className="cost"><strong>{formatCurrency(totals.costUSD)}</strong></td>
+              <td><strong>{N(totals.inputTokens)}</strong></td>
+              <td><strong>{N(totals.outputTokens)}</strong></td>
+              <td><strong>{N(totals.cacheCreationTokens)}</strong></td>
+              <td><strong>{N(totals.cacheReadTokens)}</strong></td>
+              <td><strong>{N(totals.totalTokens)}</strong></td>
+              <td className="cost"><strong>{C(totals.costUSD)}</strong></td>
             </tr>
           </tfoot>
         </table>
@@ -247,45 +300,73 @@ export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProp
         <thead>
           <tr>
             <th>{dateHeader}</th>
-            <th>Models</th>
-            <th>Input</th>
-            <th>Output</th>
-            <th>Cache Create</th>
-            <th>Cache Read</th>
-            <th>Total</th>
-            <th>Cost</th>
+            <th>{"Models"}</th>
+            <th>{"Input"}</th>
+            <th>{"Output"}</th>
+            <th>{"Cache Create"}</th>
+            <th>{"Cache Read"}</th>
+            <th>{"Total"}</th>
+            <th>{"Cost"}</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, i) => (
-            <tr key={`${row.date}-${i}`} style={{ background: monthColor(row.date) }}>
-              <td className="date-cell">{formatDate(row.date)}</td>
-              <td className="models-cell">
-                <div className="models-list">
-                  {row.models.map((m) => (
-                    <span key={m} className={`model-tag${isCurrent(row.date) && glowing.has(m) ? " glow" : ""}`}>{m}</span>
-                  ))}
-                </div>
-              </td>
-              <td>{formatNumber(row.inputTokens)}</td>
-              <td>{formatNumber(row.outputTokens)}</td>
-              <td>{formatNumber(row.cacheCreationTokens)}</td>
-              <td>{formatNumber(row.cacheReadTokens)}</td>
-              <td>{formatNumber(row.totalTokens)}</td>
-              <td className="cost">{formatCurrency(row.costUSD)}</td>
-            </tr>
-          ))}
+          {rows.map((row, i) => {
+            const hasModels = modelByDate.has(row.date);
+            const isExpanded = expandedDates.has(row.date);
+            const subRows = isExpanded ? (modelByDate.get(row.date) ?? []) : [];
+            return (
+              <React.Fragment key={`${row.date}-${i}`}>
+                <tr style={{ background: monthColor(row.date) }}>
+                  <td className="date-cell">
+                    {hasModels && (
+                      <button className={`expand-btn ${isExpanded ? "expanded" : ""}`} onClick={() => toggleDate(row.date)}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </button>
+                    )}
+                    {formatDate(row.date)}
+                  </td>
+                  <td className="models-cell">
+                    <div className="models-list">
+                      {row.models.map((m) => (
+                        <span key={m} className={`model-tag${isCurrent(row.date) && glowing.has(m) ? " glow" : ""}`}>{m}</span>
+                      ))}
+                    </div>
+                  </td>
+                  <td>{N(row.inputTokens)}</td>
+                  <td>{N(row.outputTokens)}</td>
+                  <td>{N(row.cacheCreationTokens)}</td>
+                  <td>{N(row.cacheReadTokens)}</td>
+                  <td>{N(row.totalTokens)}</td>
+                  <td className="cost">{C(row.costUSD)}</td>
+                </tr>
+                {subRows.map((sr) => (
+                  <tr key={`${row.date}-${sr.model}`} className="breakdown-row" style={{ background: monthColor(row.date) }}>
+                    <td className="date-cell breakdown-indent">└─ {sr.model}</td>
+                    <td />
+                    <td>{N(sr.inputTokens)}</td>
+                    <td>{N(sr.outputTokens)}</td>
+                    <td>{N(sr.cacheCreationTokens)}</td>
+                    <td>{N(sr.cacheReadTokens)}</td>
+                    <td>{N(sr.totalTokens)}</td>
+                    <td className="cost">{C(sr.costUSD)}</td>
+                  </tr>
+                ))}
+              </React.Fragment>
+            );
+          })}
         </tbody>
         <tfoot>
           <tr className="totals-row">
-            <td><strong>Total</strong></td>
+            <td><strong>{"Total"}</strong></td>
             <td />
-            <td><strong>{formatNumber(totals.inputTokens)}</strong></td>
-            <td><strong>{formatNumber(totals.outputTokens)}</strong></td>
-            <td><strong>{formatNumber(totals.cacheCreationTokens)}</strong></td>
-            <td><strong>{formatNumber(totals.cacheReadTokens)}</strong></td>
-            <td><strong>{formatNumber(totals.totalTokens)}</strong></td>
-            <td className="cost"><strong>{formatCurrency(totals.costUSD)}</strong></td>
+            <td><strong>{N(totals.inputTokens)}</strong></td>
+            <td><strong>{N(totals.outputTokens)}</strong></td>
+            <td><strong>{N(totals.cacheCreationTokens)}</strong></td>
+            <td><strong>{N(totals.cacheReadTokens)}</strong></td>
+            <td><strong>{N(totals.totalTokens)}</strong></td>
+            <td className="cost"><strong>{C(totals.costUSD)}</strong></td>
           </tr>
         </tfoot>
       </table>
