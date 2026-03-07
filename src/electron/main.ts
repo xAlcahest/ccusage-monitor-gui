@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -127,6 +127,13 @@ ipcMain.handle("window:isMaximized", () => mainWindow?.isMaximized() ?? false);
 
 // App info
 ipcMain.handle("app:version", () => app.getVersion());
+
+// Open external URLs in default browser
+ipcMain.on("shell:openExternal", (_event, url: string) => {
+  if (typeof url === "string" && (url.startsWith("https://") || url.startsWith("http://"))) {
+    shell.openExternal(url);
+  }
+});
 
 // Renderer ready — send initial snapshot
 ipcMain.on("dashboard:ready", () => {

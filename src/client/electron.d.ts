@@ -25,6 +25,7 @@ interface ElectronAPI {
   onUpdateError: (callback: (message: string) => void) => () => void;
   installUpdate: () => void;
   checkForUpdate: () => void;
+  openExternal: (url: string) => void;
 }
 
 interface Window {

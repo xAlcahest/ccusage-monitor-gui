@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, type MouseEvent as ReactMouseEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { LANGUAGES } from "../i18n";
 import type { AppSettings, ThemeMode, UpdateChannel } from "../types";
@@ -232,7 +232,18 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
               <p className="settings-version">{t("settings.license", { license: "MIT" })}</p>
               {version && <p className="settings-version">{t("settings.currentVersion", { version })}</p>}
               <p className="settings-version">
-                <a href="https://github.com/xAlcahest/ccusage-monitor-gui" target="_blank" rel="noopener noreferrer" className="settings-link">
+                <a
+                  href="https://github.com/xAlcahest/ccusage-monitor-gui"
+                  className="settings-link"
+                  onClick={(e) => {
+                    if (window.electronAPI) {
+                      e.preventDefault();
+                      window.electronAPI.openExternal("https://github.com/xAlcahest/ccusage-monitor-gui");
+                    }
+                  }}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {t("settings.sourceCode")}
                 </a>
               </p>
