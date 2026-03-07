@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { LANGUAGES } from "../i18n";
 import type { AppSettings, ThemeMode, UpdateChannel } from "../types";
 
 type Section = "appearance" | "updates" | "advanced";
@@ -10,10 +12,13 @@ interface SettingsProps {
 }
 
 export function Settings({ settings, onChange, onClose }: SettingsProps) {
+  const { t } = useTranslation();
   const [section, setSection] = useState<Section>("appearance");
   const [closing, setClosing] = useState(false);
   const [version, setVersion] = useState("");
   const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "up-to-date" | "error">("idle");
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const close = useCallback(() => {
@@ -28,6 +33,15 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [close]);
+
+  useEffect(() => {
+    if (!langOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [langOpen]);
 
   useEffect(() => {
     window.electronAPI?.getVersion().then(setVersion);
@@ -63,13 +77,13 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
   return (
     <div className={`settings-overlay${closing ? " closing" : ""}`} ref={overlayRef}>
       <nav className="settings-nav">
-        <NavItem icon={<PaletteIcon />} label="Appearance" active={section === "appearance"} onClick={() => setSection("appearance")} />
-        <NavItem icon={<UpdateIcon />} label="Updates" active={section === "updates"} onClick={() => setSection("updates")} />
-        <NavItem icon={<GearIcon />} label="Advanced" active={section === "advanced"} onClick={() => setSection("advanced")} />
+        <NavItem icon={<PaletteIcon />} label={t("settings.appearance")} active={section === "appearance"} onClick={() => setSection("appearance")} />
+        <NavItem icon={<UpdateIcon />} label={t("settings.updates")} active={section === "updates"} onClick={() => setSection("updates")} />
+        <NavItem icon={<GearIcon />} label={t("settings.advanced")} active={section === "advanced"} onClick={() => setSection("advanced")} />
       </nav>
 
       <div className="settings-content">
-        <button className="settings-close" onClick={close} title="Close (Esc)">
+        <button className="settings-close" onClick={close} title={t("settings.close")}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -78,17 +92,50 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
 
         {section === "appearance" && (
           <div className="settings-section">
-            <h2>Appearance</h2>
-            <p className="settings-desc">Customize how the app looks.</p>
+            <h2>{t("settings.appearanceTitle")}</h2>
+            <p className="settings-desc">{t("settings.appearanceDesc")}</p>
 
             <div className="settings-group">
-              <label>Theme</label>
+              <label>{t("settings.theme")}</label>
               <div className="settings-btn-group">
-                {(["auto", "dark", "light"] as const).map((t) => (
-                  <button key={t} className={`settings-btn${settings.theme === t ? " active" : ""}`} onClick={() => setTheme(t)}>
-                    {t === "auto" ? "Auto" : t === "dark" ? "Dark" : "Light"}
+                {(["auto", "dark", "light"] as const).map((th) => (
+                  <button key={th} className={`settings-btn${settings.theme === th ? " active" : ""}`} onClick={() => setTheme(th)}>
+                    {th === "auto" ? t("settings.themeAuto") : th === "dark" ? t("settings.themeDark") : t("settings.themeLight")}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <div className="settings-group">
+              <div className="settings-toggle">
+                <div>
+                  <div className="settings-toggle-label">{t("settings.animateNumbers")}</div>
+                  <div className="settings-toggle-desc">{t("settings.animateNumbersDesc")}</div>
+                </div>
+                <button className={`toggle-switch${settings.animateNumbers ? " on" : ""}`} onClick={() => onChange({ ...settings, animateNumbers: !settings.animateNumbers })} />
+              </div>
+            </div>
+
+            <div className="settings-group">
+              <label>{t("settings.language")}</label>
+              <div className="custom-select" ref={langRef}>
+                <button className="custom-select-trigger" onClick={() => setLangOpen(!langOpen)}>
+                  <span>{LANGUAGES.find((l) => l.code === settings.locale)?.label ?? "English"}</span>
+                  <svg className={`custom-select-chevron${langOpen ? " open" : ""}`} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                </button>
+                {langOpen && (
+                  <div className="custom-select-menu">
+                    {LANGUAGES.map((lang) => (
+                      <button
+                        key={lang.code}
+                        className={`custom-select-option${settings.locale === lang.code ? " active" : ""}`}
+                        onClick={() => { onChange({ ...settings, locale: lang.code }); setLangOpen(false); }}
+                      >
+                        {lang.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -96,8 +143,8 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
 
         {section === "updates" && (
           <div className="settings-section">
-            <h2>Updates</h2>
-            <p className="settings-desc">Manage application updates.</p>
+            <h2>{t("settings.updatesTitle")}</h2>
+            <p className="settings-desc">{t("settings.updatesDesc")}</p>
 
             {window.electronAPI && (
               <>
@@ -116,11 +163,11 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
                       <path d="M2.5 11.5a10 10 0 0 1 18.8-4.3" />
                       <path d="M21.5 12.5a10 10 0 0 1-18.8 4.3" />
                     </svg>
-                    {updateStatus === "checking" ? "Checking..." : "Check for updates"}
+                    {updateStatus === "checking" ? t("settings.checking") : t("settings.checkUpdates")}
                   </button>
-                  {version && <p className="settings-version">Current version: v{version}</p>}
-                  {updateStatus === "up-to-date" && <p className="settings-version settings-success">You're up to date!</p>}
-                  {updateStatus === "error" && <p className="settings-version settings-error">Failed to check for updates.</p>}
+                  {version && <p className="settings-version">{t("settings.currentVersion", { version })}</p>}
+                  {updateStatus === "up-to-date" && <p className="settings-version settings-success">{t("settings.upToDate")}</p>}
+                  {updateStatus === "error" && <p className="settings-version settings-error">{t("settings.checkFailed")}</p>}
                 </div>
 
                 <hr className="settings-separator" />
@@ -128,19 +175,19 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
                 <div className="settings-group">
                   <div className="settings-toggle">
                     <div>
-                      <div className="settings-toggle-label">Automatic updates</div>
-                      <div className="settings-toggle-desc">Check for updates every 30 minutes</div>
+                      <div className="settings-toggle-label">{t("settings.autoUpdate")}</div>
+                      <div className="settings-toggle-desc">{t("settings.autoUpdateDesc")}</div>
                     </div>
                     <button className={`toggle-switch${settings.autoUpdate ? " on" : ""}`} onClick={() => setAutoUpdate(!settings.autoUpdate)} />
                   </div>
                 </div>
 
                 <div className="settings-group">
-                  <label>Update channel</label>
+                  <label>{t("settings.updateChannel")}</label>
                   <div className="settings-btn-group">
                     {(["release", "prerelease", "all"] as const).map((ch) => (
                       <button key={ch} className={`settings-btn${settings.updateChannel === ch ? " active" : ""}`} onClick={() => setUpdateChannel(ch)}>
-                        {ch === "release" ? "Stable" : ch === "prerelease" ? "Pre-release" : "All"}
+                        {ch === "release" ? t("settings.channelStable") : ch === "prerelease" ? t("settings.channelPrerelease") : t("settings.channelAll")}
                       </button>
                     ))}
                   </div>
@@ -149,18 +196,18 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
             )}
 
             {!window.electronAPI && (
-              <p className="settings-version">Updates are only available in the desktop app.</p>
+              <p className="settings-version">{t("settings.updatesDesktopOnly")}</p>
             )}
           </div>
         )}
 
         {section === "advanced" && (
           <div className="settings-section">
-            <h2>Advanced</h2>
-            <p className="settings-desc">Advanced configuration options.</p>
+            <h2>{t("settings.advancedTitle")}</h2>
+            <p className="settings-desc">{t("settings.advancedDesc")}</p>
 
             <div className="settings-group">
-              <label>Claude Projects Path</label>
+              <label>{t("settings.projectsPath")}</label>
               <input
                 className="settings-input"
                 type="text"
@@ -168,10 +215,11 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
                 onChange={(e) => setProjectsPath(e.target.value)}
                 spellCheck={false}
               />
-              <p className="settings-input-hint">Directory where Claude Code stores project data. Requires restart to take effect.</p>
+              <p className="settings-input-hint">{t("settings.projectsPathHint")}</p>
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
@@ -217,3 +265,4 @@ function GearIcon() {
     </svg>
   );
 }
+

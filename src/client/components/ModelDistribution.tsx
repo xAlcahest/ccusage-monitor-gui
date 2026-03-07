@@ -8,6 +8,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 import type { DashboardRow } from "../types";
 import { formatNumber, formatDateShort } from "../utils";
 
@@ -19,11 +20,13 @@ interface ModelDistributionProps {
 const COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#e0e7ff", "#818cf8", "#7c3aed"];
 
 export function ModelDistribution({ modelRows, rows }: ModelDistributionProps) {
+  const { t } = useTranslation();
+
   if (modelRows.length === 0) return null;
 
   const isHourly = rows.length > 0 && rows[0].date.includes(" ");
   const dateLen = rows.length > 0 ? rows[0].date.length : 10;
-  const periodLabel = isHourly ? "Hourly" : dateLen === 4 ? "Yearly" : dateLen === 7 ? "Monthly" : "Daily";
+  const periodLabel = isHourly ? t("period.hourly") : dateLen === 4 ? t("period.yearly") : dateLen === 7 ? t("period.monthly") : t("period.daily");
 
   const byDateModel = new Map<string, Map<string, number>>();
   const allModels = new Set<string>();
@@ -51,7 +54,7 @@ export function ModelDistribution({ modelRows, rows }: ModelDistributionProps) {
 
   return (
     <div className="chart-card">
-      <h3>{periodLabel} Model Usage</h3>
+      <h3>{t("chart.modelUsage", { period: periodLabel })}</h3>
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />

@@ -1,4 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { DashboardRow, DashboardTotals, ViewMode } from "../types";
 import { formatCurrency, formatDate, shortenProject } from "../utils";
 import { AnimatedNumber, AnimatedCurrency } from "./AnimatedValue";
@@ -177,8 +178,9 @@ function groupModelsByDate(modelRows: DashboardRow[], dateLen: number): Map<stri
 export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProps) {
   const glowing = useGlowingModels(modelRows);
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+  const { t } = useTranslation();
   const isHourly = rows.length > 0 && rows[0].date.includes(" ");
-  const dateHeader = isHourly ? "Hour" : "Date";
+  const dateHeader = isHourly ? t("table.hour") : t("table.date");
   const projectGroups = useMemo(
     () => (viewMode === "project" ? groupProjectsByDay(rows) : []),
     [rows, viewMode],
@@ -199,7 +201,7 @@ export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProp
   };
 
   if (rows.length === 0) {
-    return <div className="empty-state">{"No usage data for this range."}</div>;
+    return <div className="empty-state">{t("table.empty")}</div>;
   }
 
   if (viewMode === "project") {
@@ -220,14 +222,14 @@ export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProp
           <thead>
             <tr>
               <th>{dateHeader}</th>
-              <th>{"Projects"}</th>
-              <th>{"Models"}</th>
-              <th>{"Input"}</th>
-              <th>{"Output"}</th>
-              <th>{"Cache Create"}</th>
-              <th>{"Cache Read"}</th>
-              <th>{"Total"}</th>
-              <th>{"Cost"}</th>
+              <th>{t("table.projects")}</th>
+              <th>{t("table.models")}</th>
+              <th>{t("table.input")}</th>
+              <th>{t("table.output")}</th>
+              <th>{t("table.cacheCreate")}</th>
+              <th>{t("table.cacheRead")}</th>
+              <th>{t("table.total")}</th>
+              <th>{t("table.cost")}</th>
             </tr>
           </thead>
           <tbody>
@@ -268,7 +270,7 @@ export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProp
           </tbody>
           <tfoot>
             <tr className="totals-row">
-              <td><strong>{"Total"}</strong></td>
+              <td><strong>{t("table.total")}</strong></td>
               <td />
               <td />
               <td><strong>{N(totals.inputTokens)}</strong></td>
@@ -300,13 +302,13 @@ export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProp
         <thead>
           <tr>
             <th>{dateHeader}</th>
-            <th>{"Models"}</th>
-            <th>{"Input"}</th>
-            <th>{"Output"}</th>
-            <th>{"Cache Create"}</th>
-            <th>{"Cache Read"}</th>
-            <th>{"Total"}</th>
-            <th>{"Cost"}</th>
+            <th>{t("table.models")}</th>
+            <th>{t("table.input")}</th>
+            <th>{t("table.output")}</th>
+            <th>{t("table.cacheCreate")}</th>
+            <th>{t("table.cacheRead")}</th>
+            <th>{t("table.total")}</th>
+            <th>{t("table.cost")}</th>
           </tr>
         </thead>
         <tbody>
@@ -359,7 +361,7 @@ export function UsageTable({ rows, totals, viewMode, modelRows }: UsageTableProp
         </tbody>
         <tfoot>
           <tr className="totals-row">
-            <td><strong>{"Total"}</strong></td>
+            <td><strong>{t("table.total")}</strong></td>
             <td />
             <td><strong>{N(totals.inputTokens)}</strong></td>
             <td><strong>{N(totals.outputTokens)}</strong></td>

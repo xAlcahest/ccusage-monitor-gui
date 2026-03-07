@@ -61,6 +61,8 @@ export type UpdateChannel = "release" | "prerelease" | "all";
 
 export interface AppSettings {
   theme: ThemeMode;
+  locale: string;
+  animateNumbers: boolean;
   autoUpdate: boolean;
   updateChannel: UpdateChannel;
   projectsPath: string;

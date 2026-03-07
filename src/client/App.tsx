@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useUsageData } from "./hooks/useUsageData";
 import { Titlebar } from "./components/Titlebar";
@@ -21,6 +22,8 @@ import type { DateRange, ViewMode, AggregationMode, TodayMode, AppSettings } fro
 const SETTINGS_KEY = "app-settings";
 const DEFAULT_SETTINGS: AppSettings = {
   theme: "auto",
+  locale: "en",
+  animateNumbers: false,
   autoUpdate: true,
   updateChannel: "release",
   projectsPath: "~/.claude/projects",
@@ -43,6 +46,7 @@ function applyTheme(theme: AppSettings["theme"]) {
 }
 
 export function App() {
+  const { i18n } = useTranslation();
   const { data, projectRows, modelRows, hourlyRows, hourlyProjectRows, hourlyModelRows, connected, send } = useWebSocket();
   const [dateRange, setDateRange] = useState<DateRange>("this-month");
   const [viewMode, setViewMode] = useState<ViewMode>("daily");
@@ -56,6 +60,10 @@ export function App() {
   useEffect(() => {
     applyTheme(settings.theme);
   }, [settings.theme]);
+
+  useEffect(() => {
+    i18n.changeLanguage(settings.locale);
+  }, [settings.locale, i18n]);
 
   const handleSettingsChange = useCallback((next: AppSettings) => {
     setSettings(next);
@@ -71,7 +79,7 @@ export function App() {
   );
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-animate-numbers={settings.animateNumbers}>
       <Titlebar />
       <UpdateBanner />
       <div className="app-body">

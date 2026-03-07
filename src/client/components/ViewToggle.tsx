@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import type { ViewMode } from "../types";
 
 interface ViewToggleProps {
@@ -6,21 +7,23 @@ interface ViewToggleProps {
 }
 
 export function ViewToggle({ value, onChange }: ViewToggleProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="filter-group">
-      <span className="filter-label">View:</span>
+      <span className="filter-label">{t("view.label")}</span>
       <div className="filter-buttons">
         <button
           className={`filter-btn ${value === "daily" ? "active" : ""}`}
           onClick={() => onChange("daily")}
         >
-          By Day
+          {t("view.byDay")}
         </button>
         <button
           className={`filter-btn ${value === "project" ? "active" : ""}`}
           onClick={() => onChange("project")}
         >
-          By Project
+          {t("view.byProject")}
         </button>
       </div>
     </div>

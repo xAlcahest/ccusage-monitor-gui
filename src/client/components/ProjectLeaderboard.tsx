@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { DashboardRow } from "../types";
 import { formatCurrency, shortenProject } from "../utils";
 
@@ -55,6 +56,7 @@ function getInitialCollapsed(): boolean {
 }
 
 export function ProjectLeaderboard({ rows }: ProjectLeaderboardProps) {
+  const { t } = useTranslation();
   const allProjects = useMemo(() => aggregateByProject(rows), [rows]);
   const projects = useMemo(
     () => allProjects.filter((p) => shortenProject(p.name) !== "~").slice(0, 5),
@@ -78,7 +80,7 @@ export function ProjectLeaderboard({ rows }: ProjectLeaderboardProps) {
     <div className="leaderboard">
       <h3 className="leaderboard-header" onClick={toggleCollapsed}>
         <span className={`collapse-arrow ${collapsed ? "collapsed" : ""}`}>&#9660;</span>
-        Project Leaderboard
+        {t("leaderboard.title")}
       </h3>
       {!collapsed && (
         <div className="lb-cards">
@@ -94,11 +96,11 @@ export function ProjectLeaderboard({ rows }: ProjectLeaderboardProps) {
                 <span className="lb-card-cost">{formatCurrency(p.costUSD)}</span>
               </div>
               <div className="lb-card-stats">
-                <span className="lb-stat" title="Input tokens">In: {compactTokens(p.inputTokens)}</span>
-                <span className="lb-stat" title="Output tokens">Out: {compactTokens(p.outputTokens)}</span>
-                <span className="lb-stat" title="Cache create">CC: {compactTokens(p.cacheCreationTokens)}</span>
-                <span className="lb-stat" title="Cache read">CR: {compactTokens(p.cacheReadTokens)}</span>
-                <span className="lb-stat" title="Total tokens">Tot: {compactTokens(p.totalTokens)}</span>
+                <span className="lb-stat" title={t("leaderboard.inputTokens")}>{t("leaderboard.in")} {compactTokens(p.inputTokens)}</span>
+                <span className="lb-stat" title={t("leaderboard.outputTokens")}>{t("leaderboard.out")} {compactTokens(p.outputTokens)}</span>
+                <span className="lb-stat" title={t("leaderboard.cacheCreate")}>{t("leaderboard.cc")} {compactTokens(p.cacheCreationTokens)}</span>
+                <span className="lb-stat" title={t("leaderboard.cacheRead")}>{t("leaderboard.cr")} {compactTokens(p.cacheReadTokens)}</span>
+                <span className="lb-stat" title={t("leaderboard.totalTokens")}>{t("leaderboard.tot")} {compactTokens(p.totalTokens)}</span>
               </div>
             </div>
           ))}

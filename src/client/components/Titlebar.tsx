@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 export function Titlebar() {
+  const { t } = useTranslation();
   const [maximized, setMaximized] = useState(false);
 
   useEffect(() => {
@@ -13,12 +15,12 @@ export function Titlebar() {
 
   return (
     <div className="titlebar">
-      <div className="titlebar-title">Claude Code Usage Monitor</div>
+      <div className="titlebar-title">{t("header.title")}</div>
       <div className="titlebar-controls">
         <button
           className="titlebar-btn"
           onClick={() => window.electronAPI!.minimize()}
-          title="Minimize"
+          title={t("titlebar.minimize")}
         >
           <svg width="10" height="1" viewBox="0 0 10 1">
             <rect width="10" height="1" fill="currentColor" />
@@ -27,7 +29,7 @@ export function Titlebar() {
         <button
           className="titlebar-btn"
           onClick={() => window.electronAPI!.maximize()}
-          title={maximized ? "Restore" : "Maximize"}
+          title={maximized ? t("titlebar.restore") : t("titlebar.maximize")}
         >
           {maximized ? (
             <svg width="10" height="10" viewBox="0 0 10 10">
@@ -53,7 +55,7 @@ export function Titlebar() {
         <button
           className="titlebar-btn titlebar-btn-close"
           onClick={() => window.electronAPI!.close()}
-          title="Close"
+          title={t("titlebar.close")}
         >
           <svg width="10" height="10" viewBox="0 0 10 10">
             <path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" strokeWidth="1.2" />

@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 type BannerState = "downloading" | "ready" | "installing" | "error";
 
 export function UpdateBanner() {
+  const { t } = useTranslation();
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [state, setState] = useState<BannerState>("downloading");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -41,25 +43,25 @@ export function UpdateBanner() {
   return (
     <div className={`update-banner${state === "error" ? " update-banner-error" : ""}`}>
       {state === "downloading" && (
-        <span>Downloading update v{updateVersion}...</span>
+        <span>{t("update.downloading", { version: updateVersion })}</span>
       )}
       {state === "ready" && (
         <>
-          <span>v{updateVersion} ready to install.</span>
+          <span>{t("update.ready", { version: updateVersion })}</span>
           <button
             className="update-btn"
             onClick={() => window.electronAPI?.installUpdate()}
           >
-            Restart & Update
+            {t("update.restartAndUpdate")}
           </button>
         </>
       )}
       {state === "installing" && (
-        <span>Installing v{updateVersion} via dnf... (check polkit prompt)</span>
+        <span>{t("update.installing", { version: updateVersion })}</span>
       )}
       {state === "error" && (
         <>
-          <span>Update failed{errorMsg ? `: ${errorMsg}` : ""}</span>
+          <span>{errorMsg ? t("update.failedWithError", { error: errorMsg }) : t("update.failed")}</span>
           <button
             className="update-btn"
             onClick={() => {
@@ -67,7 +69,7 @@ export function UpdateBanner() {
               setErrorMsg(null);
             }}
           >
-            Retry
+            {t("update.retry")}
           </button>
         </>
       )}

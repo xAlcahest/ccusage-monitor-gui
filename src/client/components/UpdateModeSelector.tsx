@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 interface UpdateModeSelectorProps {
   value: number;
   onChange: (intervalMs: number) => void;
@@ -10,9 +12,11 @@ const OPTIONS = [
 ];
 
 export function UpdateModeSelector({ value, onChange }: UpdateModeSelectorProps) {
+  const { t } = useTranslation();
+
   return (
     <div className="filter-group">
-      <span className="filter-label">Updates:</span>
+      <span className="filter-label">{t("updateMode.label")}</span>
       <div className="filter-buttons">
         {OPTIONS.map((opt) => (
           <button

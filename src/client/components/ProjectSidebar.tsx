@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { DashboardRow } from "../types";
 import { formatCurrency, shortenProject } from "../utils";
 
@@ -56,6 +57,7 @@ function getInitialCollapsed(): boolean {
 }
 
 export function ProjectSidebar({ rows }: ProjectSidebarProps) {
+  const { t } = useTranslation();
   const allProjects = useMemo(() => aggregateByProject(rows), [rows]);
   const projects = useMemo(
     () => allProjects.filter((p) => shortenProject(p.name) !== "~"),
@@ -77,7 +79,7 @@ export function ProjectSidebar({ rows }: ProjectSidebarProps) {
     <aside className={`sidebar ${collapsed ? "sidebar-collapsed" : ""}`}>
       {!collapsed && (
         <div className="sidebar-content">
-          <h3 className="sidebar-title">Projects Leaderboard</h3>
+          <h3 className="sidebar-title">{t("sidebar.title")}</h3>
           <div className="sidebar-list">
             {projects.map((p, i) => (
               <div key={p.name} className="sidebar-item" title={p.name}>
@@ -91,20 +93,20 @@ export function ProjectSidebar({ rows }: ProjectSidebarProps) {
                   <span className="sidebar-item-cost">{formatCurrency(p.costUSD)}</span>
                 </div>
                 <div className="sidebar-item-stats">
-                  <span>In {compactTokens(p.inputTokens)}</span>
-                  <span>Out {compactTokens(p.outputTokens)}</span>
-                  <span>CC {compactTokens(p.cacheCreationTokens)}</span>
-                  <span>CR {compactTokens(p.cacheReadTokens)}</span>
+                  <span>{t("leaderboard.in")} {compactTokens(p.inputTokens)}</span>
+                  <span>{t("leaderboard.out")} {compactTokens(p.outputTokens)}</span>
+                  <span>{t("leaderboard.cc")} {compactTokens(p.cacheCreationTokens)}</span>
+                  <span>{t("leaderboard.cr")} {compactTokens(p.cacheReadTokens)}</span>
                 </div>
               </div>
             ))}
             {projects.length === 0 && (
-              <div className="sidebar-empty">No projects</div>
+              <div className="sidebar-empty">{t("sidebar.empty")}</div>
             )}
           </div>
         </div>
       )}
-      <button className="sidebar-toggle" onClick={toggleCollapsed} title={collapsed ? "Expand sidebar" : "Collapse sidebar"}>
+      <button className="sidebar-toggle" onClick={toggleCollapsed} title={collapsed ? t("sidebar.expand") : t("sidebar.collapse")}>
         <span className={`sidebar-arrow ${collapsed ? "" : "expanded"}`}>&#9654;</span>
       </button>
     </aside>

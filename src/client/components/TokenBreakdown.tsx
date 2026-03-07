@@ -8,6 +8,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 import type { DashboardRow } from "../types";
 import { formatNumber, formatDateShort } from "../utils";
 
@@ -16,11 +17,13 @@ interface TokenBreakdownProps {
 }
 
 export function TokenBreakdown({ rows }: TokenBreakdownProps) {
+  const { t } = useTranslation();
+
   if (rows.length === 0) return null;
 
   const isHourly = rows[0].date.includes(" ");
   const dateLen = rows[0].date.length;
-  const periodLabel = isHourly ? "Hourly" : dateLen === 4 ? "Yearly" : dateLen === 7 ? "Monthly" : "Daily";
+  const periodLabel = isHourly ? t("period.hourly") : dateLen === 4 ? t("period.yearly") : dateLen === 7 ? t("period.monthly") : t("period.daily");
 
   const byDate = new Map<string, { Input: number; Output: number; "Cache Create": number; "Cache Read": number }>();
   for (const r of rows) {
@@ -37,7 +40,7 @@ export function TokenBreakdown({ rows }: TokenBreakdownProps) {
 
   return (
     <div className="chart-card">
-      <h3>{periodLabel} Token Breakdown</h3>
+      <h3>{t("chart.tokenBreakdown", { period: periodLabel })}</h3>
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -61,10 +64,10 @@ export function TokenBreakdown({ rows }: TokenBreakdownProps) {
             }}
           />
           <Legend />
-          <Line type="monotone" dataKey="Input" stroke="#6366f1" strokeWidth={2} dot={false} isAnimationActive={false} />
-          <Line type="monotone" dataKey="Output" stroke="#8b5cf6" strokeWidth={2} dot={false} isAnimationActive={false} />
-          <Line type="monotone" dataKey="Cache Create" stroke="#a78bfa" strokeWidth={2} dot={false} isAnimationActive={false} />
-          <Line type="monotone" dataKey="Cache Read" stroke="#c4b5fd" strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="Input" name={t("chart.inputTokens")} stroke="#6366f1" strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="Output" name={t("chart.outputTokens")} stroke="#8b5cf6" strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="Cache Create" name={t("chart.cacheCreateTokens")} stroke="#a78bfa" strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Line type="monotone" dataKey="Cache Read" name={t("chart.cacheReadTokens")} stroke="#c4b5fd" strokeWidth={2} dot={false} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
