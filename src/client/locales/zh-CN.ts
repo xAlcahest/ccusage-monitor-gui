@@ -99,6 +99,7 @@ export default {
   "settings.checking": "正在检查...",
   "settings.currentVersion": "当前版本: v{{version}}",
   "settings.upToDate": "已是最新版本！",
+  "settings.updateAvailable": "发现更新！正在下载...",
   "settings.checkFailed": "检查更新失败。",
   "settings.autoUpdate": "自动更新",
   "settings.autoUpdateDesc": "每30分钟检查一次更新",

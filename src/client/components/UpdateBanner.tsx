@@ -65,8 +65,9 @@ export function UpdateBanner() {
           <button
             className="update-btn"
             onClick={() => {
-              setState("ready");
+              setState("installing");
               setErrorMsg(null);
+              window.electronAPI?.installUpdate();
             }}
           >
             {t("update.retry")}

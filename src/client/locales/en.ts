@@ -114,6 +114,7 @@ export default {
   "settings.checking": "Checking...",
   "settings.currentVersion": "Current version: v{{version}}",
   "settings.upToDate": "You're up to date!",
+  "settings.updateAvailable": "Update found! Downloading...",
   "settings.checkFailed": "Failed to check for updates.",
   "settings.autoUpdate": "Automatic updates",
   "settings.autoUpdateDesc": "Check for updates every 30 minutes",

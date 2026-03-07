@@ -99,6 +99,7 @@ export default {
   "settings.checking": "確認中...",
   "settings.currentVersion": "現在のバージョン: v{{version}}",
   "settings.upToDate": "最新バージョンです！",
+  "settings.updateAvailable": "アップデートが見つかりました！ダウンロード中...",
   "settings.checkFailed": "アップデートの確認に失敗しました。",
   "settings.autoUpdate": "自動アップデート",
   "settings.autoUpdateDesc": "30分ごとにアップデートを確認",

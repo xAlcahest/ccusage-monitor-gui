@@ -145,6 +145,16 @@ ipcMain.on("app:message", (_event, msg) => {
   if (msg?.type === "setUpdateMode" && typeof msg.intervalMs === "number") {
     debounceMs = msg.intervalMs;
   }
+  if (msg?.type === "setAutoUpdate" && typeof msg.enabled === "boolean") {
+    if (msg.enabled) {
+      startAutoUpdateTimer();
+    } else {
+      stopAutoUpdateTimer();
+    }
+  }
+  if (msg?.type === "setUpdateChannel" && typeof msg.channel === "string") {
+    setAllowPrerelease?.(msg.channel !== "release");
+  }
   if (msg?.type === "setProjectsPath" && typeof msg.path === "string") {
     const resolved = msg.path.replace(/^~/, os.homedir());
     if (!fs.existsSync(resolved)) return;
@@ -163,6 +173,22 @@ ipcMain.on("app:message", (_event, msg) => {
 // Uses pkexec + dnf for RPM installation so the user gets a polkit password prompt.
 
 let checkForUpdates: (() => void) | null = null;
+let setAllowPrerelease: ((allow: boolean) => void) | null = null;
+let autoUpdateTimer: ReturnType<typeof setInterval> | null = null;
+
+function startAutoUpdateTimer() {
+  stopAutoUpdateTimer();
+  autoUpdateTimer = setInterval(() => {
+    checkForUpdates?.();
+  }, 30 * 60 * 1000);
+}
+
+function stopAutoUpdateTimer() {
+  if (autoUpdateTimer) {
+    clearInterval(autoUpdateTimer);
+    autoUpdateTimer = null;
+  }
+}
 
 async function setupAutoUpdater() {
   try {
@@ -173,6 +199,10 @@ async function setupAutoUpdater() {
 
     autoUpdater.autoDownload = true;
     autoUpdater.autoInstallOnAppQuit = false; // We handle install manually via pkexec + dnf
+
+    setAllowPrerelease = (allow: boolean) => {
+      autoUpdater.allowPrerelease = allow;
+    };
 
     let downloadedFilePath: string | null = null;
 
@@ -240,10 +270,6 @@ async function setupAutoUpdater() {
     };
 
     checkForUpdates();
-
-    setInterval(() => {
-      checkForUpdates?.();
-    }, 30 * 60 * 1000);
   } catch (err) {
     console.log("[updater] electron-updater not available, skipping auto-update");
   }

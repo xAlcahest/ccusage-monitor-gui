@@ -99,6 +99,7 @@ export default {
   "settings.checking": "Controllo...",
   "settings.currentVersion": "Versione corrente: v{{version}}",
   "settings.upToDate": "Sei aggiornato!",
+  "settings.updateAvailable": "Aggiornamento trovato! Download in corso...",
   "settings.checkFailed": "Impossibile controllare gli aggiornamenti.",
   "settings.autoUpdate": "Aggiornamenti automatici",
   "settings.autoUpdateDesc": "Controlla aggiornamenti ogni 30 minuti",

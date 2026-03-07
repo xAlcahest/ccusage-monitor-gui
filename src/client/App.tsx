@@ -65,6 +65,14 @@ export function App() {
     i18n.changeLanguage(settings.locale);
   }, [settings.locale, i18n]);
 
+  useEffect(() => {
+    send({ type: "setAutoUpdate", enabled: settings.autoUpdate });
+  }, [settings.autoUpdate, send]);
+
+  useEffect(() => {
+    send({ type: "setUpdateChannel", channel: settings.updateChannel });
+  }, [settings.updateChannel, send]);
+
   const handleSettingsChange = useCallback((next: AppSettings) => {
     setSettings(next);
     try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(next)); } catch { /* ignore */ }

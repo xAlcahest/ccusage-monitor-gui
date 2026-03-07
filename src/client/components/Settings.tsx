@@ -16,7 +16,7 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
   const [section, setSection] = useState<Section>("appearance");
   const [closing, setClosing] = useState(false);
   const [version, setVersion] = useState("");
-  const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "up-to-date" | "error">("idle");
+  const [updateStatus, setUpdateStatus] = useState<"idle" | "checking" | "up-to-date" | "available" | "error">("idle");
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -56,7 +56,7 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
       setUpdateStatus("up-to-date");
     });
     const cleanupAvailable = window.electronAPI.onUpdateAvailable(() => {
-      setUpdateStatus("idle");
+      setUpdateStatus("available");
     });
     const cleanupError = window.electronAPI.onUpdateError(() => {
       setUpdateStatus("error");
@@ -168,6 +168,7 @@ export function Settings({ settings, onChange, onClose }: SettingsProps) {
                   </button>
                   {version && <p className="settings-version">{t("settings.currentVersion", { version })}</p>}
                   {updateStatus === "up-to-date" && <p className="settings-version settings-success">{t("settings.upToDate")}</p>}
+                  {updateStatus === "available" && <p className="settings-version settings-success">{t("settings.updateAvailable")}</p>}
                   {updateStatus === "error" && <p className="settings-version settings-error">{t("settings.checkFailed")}</p>}
                 </div>
 
